@@ -1,24 +1,63 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 📚 Letras Documental - Book Library Management System
 
-## Getting Started
+A modern book library web application built with Next.js, TypeScript, Bulma CSS, Firebase, and RTK Query for state management.
 
-First, run the development server:
+## ✨ Features
+
+- **📖 Book Management**: Add, view, edit, and delete books
+- **🔍 Search & Filter**: Real-time search and filter by book type and location
+- **📱 Responsive Design**: Mobile-first design with Bulma CSS framework
+- **🖼️ Image Upload**: Cloudinary integration for book cover images
+- **🔥 Firebase Integration**: Real-time database with Firestore
+- **⚡ RTK Query**: Efficient state management and data fetching
+- **📄 Pagination**: Browse large collections with ease
+- **🎨 Modern UI**: Clean, modern interface with hover effects and animations
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+Make sure you have Node.js (16+) installed on your machine.
+
+### Installation
+
+1. Clone the repository
+2. Install dependencies:
+
+```bash
+npm install
+```
+
+3. Set up your environment variables:
+   Create a `.env.local` file in the root directory with your Firebase configuration:
+
+```env
+NEXT_PUBLIC_API_KEY=your_firebase_api_key
+NEXT_PUBLIC_AUTH_DOMAIN=your_firebase_auth_domain
+NEXT_PUBLIC_PROJECT_ID=your_firebase_project_id
+NEXT_PUBLIC_STORAGE_BUCKET=your_firebase_storage_bucket
+NEXT_PUBLIC_MESSAGING_SENDER_ID=your_firebase_messaging_sender_id
+NEXT_PUBLIC_APP_ID=your_firebase_app_id
+NEXT_PUBLIC_DATABASE_URL=your_firebase_database_url
+```
+
+4. Run the development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3001](http://localhost:3001) with your browser to see the application.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🏗️ Tech Stack
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **Frontend**: Next.js 15, React 19, TypeScript
+- **Styling**: Bulma CSS Framework
+- **State Management**: Redux Toolkit with RTK Query
+- **Database**: Firebase Firestore
+- **Image Storage**: Cloudinary
+- **Form Validation**: React Hook Form with Zod
+- **Icons**: Lucide React
 
 ## Learn More
 
