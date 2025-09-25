@@ -45,7 +45,10 @@ const Header = () => {
         <div className="navbar-item">
           <input type="text" className="input" placeholder="Buscar" />
 
-          <div className="is-flex is-justify-content-center is-align-items-center is-gap-2 is-clickable">
+          <div
+            onClick={() => router.push("/login")}
+            className="is-flex is-justify-content-center is-align-items-center is-gap-2 is-clickable"
+          >
             <LogIn color="white" size={40} />
             <p className="has-text-white" style={{ fontSize: 10 }}>
               Iniciar Sesión
