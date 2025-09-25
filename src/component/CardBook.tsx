@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { Book } from "../types/book";
 import { cutText } from "../utils/utils";
 import { EllipsisVertical } from "lucide-react";
@@ -20,9 +21,9 @@ const CardBook = ({ book }: { book: Book }) => {
           </div>
           <div className="dropdown-menu" id="dropdown-menu" role="menu">
             <div className="dropdown-content">
-              <a href="#" className="dropdown-item">
+              <Link href={`/book/edit/${book.id}`} className="dropdown-item">
                 Editar
-              </a>
+              </Link>
               <a href="#" className="dropdown-item has-text-danger">
                 Eliminar
               </a>

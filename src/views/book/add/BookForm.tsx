@@ -1,13 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { ChevronLeft } from "lucide-react";
-import { useCreateBookMutation } from "@/src/redux/store/api/booksApi";
+import {
+  useCreateBookMutation,
+  useUpdateBookMutation,
+  useGetBookByIdQuery,
+} from "@/src/redux/store/api/booksApi";
+import { Book } from "@/src/types/book";
 
 // Zod schema for book validation
 const bookSchema = z.object({
@@ -29,17 +34,33 @@ const bookSchema = z.object({
 
 type BookFormData = z.infer<typeof bookSchema>;
 
-const AddBookView = () => {
+interface BookFormProps {
+  bookId?: string;
+  mode?: "add" | "edit";
+}
+
+const BookForm = ({ bookId, mode = "add" }: BookFormProps) => {
   const router = useRouter();
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>("");
   const [isUploading, setIsUploading] = useState(false);
   const [addBook, { isLoading: isAddingBook }] = useCreateBookMutation();
+  const [updateBook, { isLoading: isUpdatingBook }] = useUpdateBookMutation();
+
+  // Fetch book data if in edit mode
+  const { data: bookData, isLoading: isLoadingBook } = useGetBookByIdQuery(
+    bookId!,
+    {
+      skip: mode !== "edit" || !bookId,
+    }
+  );
+  const { book } = bookData || {};
 
   const {
     register,
     handleSubmit,
     formState: { errors },
+    reset,
   } = useForm<BookFormData>({
     resolver: zodResolver(bookSchema),
     defaultValues: {
@@ -57,6 +78,27 @@ const AddBookView = () => {
       },
     },
   });
+
+  // Update form when book data is loaded
+  useEffect(() => {
+    if (book && mode === "edit") {
+      reset({
+        titulo: book.titulo || "",
+        author: book.autor || "",
+        descripcion: book.descripcion || "",
+        editorial: book.editorial || "",
+        anioPublicacion: book.anioPublicacion || "",
+        numPag: book.numPag || "",
+        tipo: book.tipo || "",
+        ubicacion: {
+          repisa: book.ubicacion?.repisa || "",
+          col: book.ubicacion?.col || 1,
+          row: book.ubicacion?.row || 1,
+        },
+      });
+      setImagePreview(book.imagen || "");
+    }
+  }, [book, mode, reset]);
 
   const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -99,22 +141,57 @@ const AddBookView = () => {
 
     try {
       let imageUrl =
+        bookData?.imagen ||
         "https://res.cloudinary.com/dvt4vznxn/image/upload/v1758764097/138617_ar3v0q.jpg";
 
       if (selectedImage) {
         imageUrl = await uploadToCloudinary(selectedImage);
       }
 
-      // Save to Firebase using RTK Query
-      const bookData = { ...data, imagen: imageUrl };
-      await addBook(bookData);
+      const bookPayload = { ...data, imagen: imageUrl };
+
+      if (mode === "edit" && bookId) {
+        // Update existing book
+        console.log("Updating book with payload:", {
+          ...bookPayload,
+          id: bookId,
+        });
+        await updateBook({ ...bookPayload, id: bookId });
+        alert("Libro actualizado correctamente");
+      } else {
+        // Create new book
+        console.log("Creating book with payload:", bookPayload);
+        await addBook(bookPayload);
+        alert("Libro agregado correctamente");
+      }
+
+      router.push("/book");
     } catch (error) {
       console.error("Error submitting form:", error);
-      alert("Error al agregar el libro. Por favor, intenta de nuevo.");
+      alert(
+        `Error al ${
+          mode === "edit" ? "actualizar" : "agregar"
+        } el libro. Por favor, intenta de nuevo.`
+      );
     } finally {
       setIsUploading(false);
     }
   };
+
+  // Show loading state when fetching book data in edit mode
+  if (mode === "edit" && isLoadingBook) {
+    return (
+      <div className="container">
+        <div className="has-text-centered">
+          <div
+            className="is-loading"
+            style={{ width: "50px", height: "50px", margin: "50px auto" }}
+          ></div>
+          <p>Cargando datos del libro...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container">
@@ -130,7 +207,7 @@ const AddBookView = () => {
           />
 
           <h2 className="title is-4 has-text-centered mb-5">
-            Agregar Nuevo Libro
+            {mode === "edit" ? "Editar Libro" : "Agregar Nuevo Libro"}
           </h2>
         </div>
 
@@ -292,12 +369,24 @@ const AddBookView = () => {
             <div className="field">
               <label className="label">Tipo *</label>
               <div className="control">
-                <input
-                  className={`input ${errors.tipo ? "is-danger" : ""}`}
-                  type="text"
-                  placeholder="Tipo de libro"
-                  {...register("tipo")}
-                />
+                <div className="select is-fullwidth">
+                  <select
+                    className={errors.tipo ? "is-danger" : ""}
+                    {...register("tipo")}
+                  >
+                    <option value="">Seleccionar tipo</option>
+                    <option value="Novela">Novela</option>
+                    <option value="Ensayo">Ensayo</option>
+                    <option value="Poesía">Poesía</option>
+                    <option value="Teatro">Teatro</option>
+                    <option value="Biografía">Biografía</option>
+                    <option value="Historia">Historia</option>
+                    <option value="Ciencia">Ciencia</option>
+                    <option value="Técnico">Técnico</option>
+                    <option value="Infantil">Infantil</option>
+                    <option value="Otro">Otro</option>
+                  </select>
+                </div>
               </div>
               {errors.tipo && (
                 <p className="help is-danger">{errors.tipo.message}</p>
@@ -383,11 +472,13 @@ const AddBookView = () => {
             <button
               type="submit"
               className={`button is-primary is-large is-size-5 ${
-                isUploading || isAddingBook ? "is-loading" : ""
+                isUploading || isAddingBook || isUpdatingBook
+                  ? "is-loading"
+                  : ""
               }`}
-              disabled={isUploading || isAddingBook}
+              disabled={isUploading || isAddingBook || isUpdatingBook}
             >
-              Agregar Libro
+              {mode === "edit" ? "Actualizar Libro" : "Agregar Libro"}
             </button>
           </div>
         </div>
@@ -398,4 +489,4 @@ const AddBookView = () => {
   );
 };
 
-export default AddBookView;
+export default BookForm;

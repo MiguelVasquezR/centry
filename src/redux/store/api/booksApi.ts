@@ -35,7 +35,10 @@ export const booksApi = apiSlice.injectEndpoints({
       query: (book) => ({
         url: "/book/update",
         method: "PUT",
-        body: book,
+        body: {
+          id: book.id,
+          data: book,
+        },
       }),
       invalidatesTags: (result, error, book) => [
         { type: "books", id: book.id },

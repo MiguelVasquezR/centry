@@ -1,7 +1,7 @@
 import BookForm from "@/src/views/book/add/BookForm";
 
-const Index = () => {
-  return <BookForm />;
+const AddBookPage = () => {
+  return <BookForm mode="add" />;
 };
 
-export default Index;
+export default AddBookPage;

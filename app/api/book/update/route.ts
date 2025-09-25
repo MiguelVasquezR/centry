@@ -3,10 +3,16 @@ import { NextResponse } from "next/server";
 
 export async function PUT(request: Request) {
   try {
-    console.log(request);
     const body = await request.json();
-    console.log(body);
+    console.log("Update request body:", body);
     const { id, data } = body;
+
+    if (!id || !data) {
+      return NextResponse.json({
+        message: "ID y datos son requeridos",
+        status: 400,
+      });
+    }
 
     const code = await updateData("libros", id, data);
 
@@ -20,9 +26,10 @@ export async function PUT(request: Request) {
     return NextResponse.json({
       message: "Libro actualizado correctamente",
       status: 200,
+      data: { id, ...data },
     });
   } catch (err) {
-    console.log(err);
+    console.error("Error updating book:", err);
     return NextResponse.json({ message: String(err), status: 500 });
   }
 }
