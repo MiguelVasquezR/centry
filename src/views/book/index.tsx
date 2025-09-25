@@ -4,12 +4,13 @@ import Pagination from "@/src/component/Pagination";
 import { useLazyFetchBooksQuery } from "@/src/redux/store/api/booksApi";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 
 const BookLibraryView = () => {
   const [page, setPage] = useState<number>(1);
   const [limit, setLimit] = useState<number>(10);
 
-  const [getMore, { data: dataBooks, isLoading: booksIsLoading }] =
+  const [getMore, { data: dataBooks, isLoading: booksIsLoading, error }] =
     useLazyFetchBooksQuery();
 
   const { books, totalPages } = dataBooks || {};
@@ -17,6 +18,12 @@ const BookLibraryView = () => {
   useEffect(() => {
     getMore({ page: page, limit });
   }, []);
+
+  useEffect(() => {
+    if (error) {
+      toast.error("Error al cargar los libros. Por favor, intenta de nuevo.");
+    }
+  }, [error]);
 
   const handleChangePage = (newPage: number) => {
     setPage(newPage);

@@ -13,6 +13,7 @@ import {
   useGetBookByIdQuery,
 } from "@/src/redux/store/api/booksApi";
 import { Book } from "@/src/types/book";
+import toast from "react-hot-toast";
 
 // Zod schema for book validation
 const bookSchema = z.object({
@@ -54,7 +55,7 @@ const BookForm = ({ bookId, mode = "add" }: BookFormProps) => {
       skip: mode !== "edit" || !bookId,
     }
   );
-  const { book } = bookData || {};
+  const book = bookData;
 
   const {
     register,
@@ -84,7 +85,7 @@ const BookForm = ({ bookId, mode = "add" }: BookFormProps) => {
     if (book && mode === "edit") {
       reset({
         titulo: book.titulo || "",
-        author: book.autor || "",
+        author: book.author || "",
         descripcion: book.descripcion || "",
         editorial: book.editorial || "",
         anioPublicacion: book.anioPublicacion || "",
@@ -132,6 +133,7 @@ const BookForm = ({ bookId, mode = "add" }: BookFormProps) => {
       return data.secure_url;
     } catch (error) {
       console.error("Error uploading to Cloudinary:", error);
+      toast.error("Error al subir la imagen. Por favor, intenta de nuevo.");
       throw new Error("Error uploading image");
     }
   };
@@ -157,18 +159,18 @@ const BookForm = ({ bookId, mode = "add" }: BookFormProps) => {
           id: bookId,
         });
         await updateBook({ ...bookPayload, id: bookId });
-        alert("Libro actualizado correctamente");
+        toast.success("Libro actualizado correctamente");
       } else {
         // Create new book
         console.log("Creating book with payload:", bookPayload);
         await addBook(bookPayload);
-        alert("Libro agregado correctamente");
+        toast.success("Libro agregado correctamente");
       }
 
       router.push("/book");
     } catch (error) {
       console.error("Error submitting form:", error);
-      alert(
+      toast.error(
         `Error al ${
           mode === "edit" ? "actualizar" : "agregar"
         } el libro. Por favor, intenta de nuevo.`

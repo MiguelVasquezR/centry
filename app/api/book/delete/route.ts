@@ -3,8 +3,15 @@ import { NextResponse } from "next/server";
 
 export async function DELETE(request: Request) {
   try {
-    const { searchParams } = new URL(request.url);
-    const id = searchParams.get("id") || "0";
+    const body = await request.json();
+    const { id } = body;
+
+    if (!id) {
+      return NextResponse.json({
+        message: "ID es requerido",
+        status: 400,
+      });
+    }
 
     const code = await deleteData("libros", id);
 
@@ -16,11 +23,11 @@ export async function DELETE(request: Request) {
     }
 
     return NextResponse.json({
-      message: "Libro eliminados correctamente",
+      message: "Libro eliminado correctamente",
       status: 200,
     });
   } catch (err) {
-    console.log(err);
+    console.error("Error deleting book:", err);
     return NextResponse.json({ message: String(err), status: 500 });
   }
 }

@@ -5,9 +5,24 @@ import { cutText } from "../utils/utils";
 import { EllipsisVertical } from "lucide-react";
 import { useState } from "react";
 import clsx from "clsx";
+import { useDeleteBookMutation } from "@/src/redux/store/api/booksApi";
+import toast from "react-hot-toast";
 
 const CardBook = ({ book }: { book: Book }) => {
   const [isActiveMenu, setIsActiveMenu] = useState<boolean>(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<boolean>(false);
+  const [deleteBook, { isLoading: isDeleting }] = useDeleteBookMutation();
+
+  const handleDelete = async () => {
+    try {
+      await deleteBook(book.id);
+      toast.success("Libro se ha eliminado correctamente");
+      setShowDeleteConfirm(false);
+    } catch (error) {
+      console.error("Error deleting book:", error);
+      toast.error("Error al eliminar el libro, por favor vuelve a intentarlo.");
+    }
+  };
 
   return (
     <div className="card p-5 is-relative">
@@ -24,7 +39,15 @@ const CardBook = ({ book }: { book: Book }) => {
               <Link href={`/book/edit/${book.id}`} className="dropdown-item">
                 Editar
               </Link>
-              <a href="#" className="dropdown-item has-text-danger">
+              <a
+                href="#"
+                className="dropdown-item has-text-danger"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setShowDeleteConfirm(true);
+                  setIsActiveMenu(false);
+                }}
+              >
                 Eliminar
               </a>
             </div>
@@ -41,6 +64,52 @@ const CardBook = ({ book }: { book: Book }) => {
           {cutText(book.titulo, 72)}
         </p>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="modal is-active">
+          <div
+            className="modal-background"
+            onClick={() => setShowDeleteConfirm(false)}
+          ></div>
+          <div className="modal-card">
+            <header className="modal-card-head">
+              <p className="modal-card-title">Confirmar Eliminación</p>
+              <button
+                className="delete"
+                aria-label="close"
+                onClick={() => setShowDeleteConfirm(false)}
+              ></button>
+            </header>
+            <section className="modal-card-body">
+              <p className="is-size-5">
+                ¿Estás seguro de que quieres eliminar el libro{" "}
+                <strong>&ldquo;{book.titulo}&rdquo;</strong>?
+              </p>
+
+              <p className="has-text-danger is-size-6 mt-2 has-text-centered is-underlined">
+                Esta acción no se puede deshacer
+              </p>
+            </section>
+            <footer className="modal-card-foot">
+              <button
+                className="button is-danger mx-2 has-text-white"
+                onClick={handleDelete}
+                disabled={isDeleting}
+              >
+                {isDeleting ? "Eliminando..." : "Eliminar"}
+              </button>
+              <button
+                className="button mx-2"
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={isDeleting}
+              >
+                Cancelar
+              </button>
+            </footer>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
