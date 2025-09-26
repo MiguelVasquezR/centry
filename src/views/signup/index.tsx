@@ -5,78 +5,66 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff, BookOpen, Library, User, Lock } from "lucide-react";
+import { Eye, EyeOff, BookOpen, Library, User, Lock, Mail } from "lucide-react";
 import toast from "react-hot-toast";
-import { signInWithEmail, resetPassword } from "@/src/firebase/auth";
+import { signUpWithEmail } from "@/src/firebase/auth";
 
-// Zod schema for login validation
-const loginSchema = z.object({
+// Zod schema for signup validation
+const signupSchema = z.object({
+  displayName: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
   email: z.string().email("Email inválido"),
   password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres"),
+  confirmPassword: z.string(),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Las contraseñas no coinciden",
+  path: ["confirmPassword"],
 });
 
-type LoginFormData = z.infer<typeof loginSchema>;
+type SignupFormData = z.infer<typeof signupSchema>;
 
-const Login = () => {
+const Signup = () => {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [showForgotPassword, setShowForgotPassword] = useState(false);
 
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<LoginFormData>({
-    resolver: zodResolver(loginSchema),
+  } = useForm<SignupFormData>({
+    resolver: zodResolver(signupSchema),
   });
 
-  const onSubmit = async (data: LoginFormData) => {
+  const onSubmit = async (data: SignupFormData) => {
     setIsLoading(true);
 
     try {
-      const { user, error } = await signInWithEmail(data.email, data.password);
+      const { user, error } = await signUpWithEmail(
+        data.email,
+        data.password,
+        data.displayName
+      );
       
       if (error) {
-        toast.error("Error al iniciar sesión. Verifica tus credenciales.");
+        toast.error("Error al crear la cuenta. Inténtalo de nuevo.");
         return;
       }
 
       if (user) {
-        toast.success("¡Bienvenido a tu biblioteca digital!");
-        router.push("/book");
+        toast.success("¡Cuenta creada exitosamente! Revisa tu email para verificar tu cuenta.");
+        router.push("/login");
       }
     } catch (error) {
-      console.error("Login error:", error);
-      toast.error("Error al iniciar sesión. Inténtalo de nuevo.");
+      console.error("Signup error:", error);
+      toast.error("Error al crear la cuenta. Inténtalo de nuevo.");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleForgotPassword = async () => {
-    const email = (document.querySelector('input[type="email"]') as HTMLInputElement)?.value;
-    
-    if (!email) {
-      toast.error("Por favor, ingresa tu email primero");
-      return;
-    }
-
-    try {
-      const { error } = await resetPassword(email);
-      if (error) {
-        toast.error("Error al enviar el email de recuperación");
-      } else {
-        toast.success("Email de recuperación enviado. Revisa tu bandeja de entrada.");
-        setShowForgotPassword(false);
-      }
-    } catch (error) {
-      toast.error("Error al enviar el email de recuperación");
-    }
-  };
-
   return (
-    <div className="login-container">
+    <div className="signup-container">
       {/* Background with floating books animation */}
       <div className="floating-books">
         <div className="book book-1">📚</div>
@@ -87,21 +75,38 @@ const Login = () => {
         <div className="book book-6">📙</div>
       </div>
 
-      <div className="login-wrapper">
-        <div className="login-card">
+      <div className="signup-wrapper">
+        <div className="signup-card">
           {/* Header */}
-          <div className="login-header">
+          <div className="signup-header">
             <div className="logo-container">
               <Library className="logo-icon" size={48} />
               <h1 className="logo-text">Letras Documental</h1>
             </div>
+            <p className="signup-subtitle">Crea tu cuenta y comienza tu biblioteca digital</p>
           </div>
 
-          {/* Login Form */}
-          <form onSubmit={handleSubmit(onSubmit)} className="login-form">
+          {/* Signup Form */}
+          <form onSubmit={handleSubmit(onSubmit)} className="signup-form">
             <div className="form-group">
               <label className="form-label">
                 <User size={20} />
+                Nombre completo
+              </label>
+              <input
+                type="text"
+                className={`form-input ${errors.displayName ? "error" : ""}`}
+                placeholder="Tu nombre completo"
+                {...register("displayName")}
+              />
+              {errors.displayName && (
+                <span className="error-message">{errors.displayName.message}</span>
+              )}
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">
+                <Mail size={20} />
                 Email
               </label>
               <input
@@ -140,78 +145,64 @@ const Login = () => {
               )}
             </div>
 
-            <div className="form-options">
-              <label className="checkbox-container">
-                <input type="checkbox" />
-                <span className="checkmark"></span>
-                Recordarme
+            <div className="form-group">
+              <label className="form-label">
+                <Lock size={20} />
+                Confirmar contraseña
               </label>
-              <button
-                type="button"
-                onClick={() => setShowForgotPassword(true)}
-                className="forgot-password"
-              >
-                ¿Olvidaste tu contraseña?
-              </button>
+              <div className="password-input-container">
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  className={`form-input ${errors.confirmPassword ? "error" : ""}`}
+                  placeholder="Confirma tu contraseña"
+                  {...register("confirmPassword")}
+                />
+                <button
+                  type="button"
+                  className="password-toggle"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                >
+                  {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+              </div>
+              {errors.confirmPassword && (
+                <span className="error-message">{errors.confirmPassword.message}</span>
+              )}
             </div>
 
             <button
               type="submit"
-              className={`login-button ${isLoading ? "loading" : ""}`}
+              className={`signup-button ${isLoading ? "loading" : ""}`}
               disabled={isLoading}
             >
               {isLoading ? (
                 <>
                   <div className="spinner"></div>
-                  Iniciando sesión...
+                  Creando cuenta...
                 </>
               ) : (
                 <>
                   <BookOpen size={20} />
-                  Acceder a mi biblioteca
+                  Crear mi cuenta
                 </>
               )}
             </button>
           </form>
 
-          {/* Signup Link */}
-          <div className="login-footer">
+          {/* Login Link */}
+          <div className="signup-footer">
             <p>
-              ¿No tienes cuenta?{" "}
-              <a href="/signup" className="signup-link">
-                Regístrate aquí
+              ¿Ya tienes cuenta?{" "}
+              <a href="/login" className="login-link">
+                Inicia sesión aquí
               </a>
             </p>
           </div>
         </div>
       </div>
 
-      {/* Forgot Password Modal */}
-      {showForgotPassword && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <h3>Recuperar Contraseña</h3>
-            <p>Ingresa tu email y te enviaremos un enlace para restablecer tu contraseña.</p>
-            <div className="modal-actions">
-              <button
-                onClick={handleForgotPassword}
-                className="modal-button primary"
-              >
-                Enviar Email
-              </button>
-              <button
-                onClick={() => setShowForgotPassword(false)}
-                className="modal-button secondary"
-              >
-                Cancelar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       <style jsx>{`
-        .login-container {
+        .signup-container {
           min-height: 100vh;
           background: white;
           position: relative;
@@ -278,21 +269,21 @@ const Login = () => {
           }
         }
 
-        .login-wrapper {
+        .signup-wrapper {
           width: 100%;
-          max-width: 400px;
+          max-width: 450px;
           padding: 20px;
           z-index: 10;
         }
 
-        .login-card {
+        .signup-card {
           background: white;
           border-radius: 20px;
           padding: 40px;
           box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
         }
 
-        .login-header {
+        .signup-header {
           text-align: center;
           margin-bottom: 30px;
         }
@@ -306,21 +297,21 @@ const Login = () => {
         }
 
         .logo-icon {
-          color: #00d1b2;
+          color: #667eea;
         }
 
         .logo-text {
           font-size: 1.8rem;
           font-weight: 700;
-          color: #00d1b2;
+          color: #667eea;
         }
 
-        .login-subtitle {
+        .signup-subtitle {
           color: #999;
           font-size: 0.9rem;
         }
 
-        .login-form {
+        .signup-form {
           margin-bottom: 20px;
         }
 
@@ -333,7 +324,7 @@ const Login = () => {
           align-items: center;
           gap: 8px;
           font-weight: 600;
-          color: #00d1b2;
+          color: #667eea;
           margin-bottom: 8px;
           font-size: 0.9rem;
         }
@@ -350,8 +341,8 @@ const Login = () => {
 
         .form-input:focus {
           outline: none;
-          border-color: #00d1b2;
-          box-shadow: 0 0 0 3px rgba(0, 209, 178, 0.1);
+          border-color: #667eea;
+          box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
 
         .form-input.error {
@@ -375,7 +366,7 @@ const Login = () => {
         }
 
         .password-toggle:hover {
-          color: #00d1b2;
+          color: #667eea;
         }
 
         .error-message {
@@ -385,43 +376,10 @@ const Login = () => {
           display: block;
         }
 
-        .form-options {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 25px;
-          font-size: 0.9rem;
-        }
-
-        .checkbox-container {
-          display: flex;
-          align-items: center;
-          cursor: pointer;
-          color: #999;
-        }
-
-        .checkbox-container input {
-          margin-right: 8px;
-        }
-
-        .forgot-password {
-          color: #00d1b2;
-          text-decoration: none;
-          font-weight: 500;
-          background: none;
-          border: none;
-          cursor: pointer;
-          font-size: inherit;
-        }
-
-        .forgot-password:hover {
-          text-decoration: underline;
-        }
-
-        .login-button {
+        .signup-button {
           width: 100%;
           padding: 14px;
-          background: #00d1b2;
+          background: #667eea;
           color: white;
           border: none;
           border-radius: 10px;
@@ -435,17 +393,17 @@ const Login = () => {
           gap: 10px;
         }
 
-        .login-button:hover:not(:disabled) {
+        .signup-button:hover:not(:disabled) {
           transform: translateY(-2px);
-          box-shadow: 0 10px 20px rgba(0, 209, 178, 0.3);
+          box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
         }
 
-        .login-button:disabled {
+        .signup-button:disabled {
           opacity: 0.7;
           cursor: not-allowed;
         }
 
-        .login-button.loading {
+        .signup-button.loading {
           background: #999;
         }
 
@@ -467,95 +425,24 @@ const Login = () => {
           }
         }
 
-        .login-footer {
+        .signup-footer {
           text-align: center;
           color: #666;
           font-size: 0.9rem;
         }
 
-        .signup-link {
-          color: #00d1b2;
+        .login-link {
+          color: #667eea;
           text-decoration: none;
           font-weight: 600;
         }
 
-        .signup-link:hover {
+        .login-link:hover {
           text-decoration: underline;
         }
 
-        /* Modal Styles */
-        .modal-overlay {
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: rgba(0, 0, 0, 0.5);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          z-index: 1000;
-        }
-
-        .modal-content {
-          background: white;
-          padding: 30px;
-          border-radius: 15px;
-          max-width: 400px;
-          width: 90%;
-          text-align: center;
-          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
-        }
-
-        .modal-content h3 {
-          color: #00d1b2;
-          margin-bottom: 15px;
-          font-size: 1.5rem;
-        }
-
-        .modal-content p {
-          color: #666;
-          margin-bottom: 25px;
-          line-height: 1.5;
-        }
-
-        .modal-actions {
-          display: flex;
-          gap: 15px;
-          justify-content: center;
-        }
-
-        .modal-button {
-          padding: 12px 24px;
-          border: none;
-          border-radius: 8px;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.3s ease;
-        }
-
-        .modal-button.primary {
-          background: #00d1b2;
-          color: white;
-        }
-
-        .modal-button.primary:hover {
-          background: #00c4a7;
-          transform: translateY(-2px);
-        }
-
-        .modal-button.secondary {
-          background: #f8f9fa;
-          color: #666;
-          border: 1px solid #e1e5e9;
-        }
-
-        .modal-button.secondary:hover {
-          background: #e9ecef;
-        }
-
         @media (max-width: 480px) {
-          .login-card {
+          .signup-card {
             padding: 30px 20px;
             margin: 10px;
           }
@@ -563,19 +450,10 @@ const Login = () => {
           .logo-text {
             font-size: 1.5rem;
           }
-
-          .modal-content {
-            padding: 20px;
-            margin: 20px;
-          }
-
-          .modal-actions {
-            flex-direction: column;
-          }
         }
       `}</style>
     </div>
   );
 };
 
-export default Login;
+export default Signup;
