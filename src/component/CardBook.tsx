@@ -7,11 +7,14 @@ import { useState } from "react";
 import clsx from "clsx";
 import { useDeleteBookMutation } from "@/src/redux/store/api/booksApi";
 import toast from "react-hot-toast";
+import { useRouter } from "next/navigation";
 
 const CardBook = ({ book }: { book: Book }) => {
   const [isActiveMenu, setIsActiveMenu] = useState<boolean>(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<boolean>(false);
   const [deleteBook, { isLoading: isDeleting }] = useDeleteBookMutation();
+
+  const router = useRouter()
 
   const handleDelete = async () => {
     try {
@@ -25,7 +28,7 @@ const CardBook = ({ book }: { book: Book }) => {
   };
 
   return (
-    <div className="card p-5 is-relative">
+    <div className="card p-5 is-relative is-clickable" onClick={(()=> router.push(`/book/${book.id}`))}>
       <div style={{ position: "absolute", right: 12, top: 12 }}>
         <div className={clsx("dropdown ", { "is-active": isActiveMenu })}>
           <div className="dropdown-trigger">

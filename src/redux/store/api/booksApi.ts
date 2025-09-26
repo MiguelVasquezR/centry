@@ -1,6 +1,10 @@
 import { apiSlice } from "./index";
 import { Book } from "../../../types/book";
 
+interface BookApiResponse {
+  book: Book;
+}
+
 export const booksApi = apiSlice.injectEndpoints({
   endpoints: (build) => ({
     fetchBooks: build.query<
@@ -21,6 +25,7 @@ export const booksApi = apiSlice.injectEndpoints({
     }),
     getBookById: build.query<Book, string>({
       query: (id) => `/book/${id}`,
+      transformResponse: (response: BookApiResponse) => response.book,
       providesTags: (result, error, id) => [{ type: "books", id }],
     }),
     createBook: build.mutation<Book, Omit<Book, "id">>({
@@ -58,7 +63,7 @@ export const booksApi = apiSlice.injectEndpoints({
 
 export const {
   useLazyFetchBooksQuery,
-  useGetBookByIdQuery,
+  useLazyGetBookByIdQuery,
   useCreateBookMutation,
   useUpdateBookMutation,
   useDeleteBookMutation,

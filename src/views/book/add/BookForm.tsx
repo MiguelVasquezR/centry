@@ -10,7 +10,7 @@ import { ChevronLeft } from "lucide-react";
 import {
   useCreateBookMutation,
   useUpdateBookMutation,
-  useGetBookByIdQuery,
+  useLazyGetBookByIdQuery,
 } from "@/src/redux/store/api/booksApi";
 import { Book } from "@/src/types/book";
 import toast from "react-hot-toast";
@@ -49,13 +49,15 @@ const BookForm = ({ bookId, mode = "add" }: BookFormProps) => {
   const [updateBook, { isLoading: isUpdatingBook }] = useUpdateBookMutation();
 
   // Fetch book data if in edit mode
-  const { data: bookData, isLoading: isLoadingBook } = useGetBookByIdQuery(
-    bookId!,
-    {
-      skip: mode !== "edit" || !bookId,
-    }
-  );
+  const [getBookById, { data: bookData, isLoading: isLoadingBook }] = useLazyGetBookByIdQuery();
   const book = bookData;
+
+  // Trigger query when in edit mode
+  useEffect(() => {
+    if (mode === "edit" && bookId) {
+      getBookById(bookId);
+    }
+  }, [mode, bookId, getBookById]);
 
   const {
     register,
@@ -85,7 +87,7 @@ const BookForm = ({ bookId, mode = "add" }: BookFormProps) => {
     if (book && mode === "edit") {
       reset({
         titulo: book.titulo || "",
-        author: book.author || "",
+        author: book.autor || "",
         descripcion: book.descripcion || "",
         editorial: book.editorial || "",
         anioPublicacion: book.anioPublicacion || "",

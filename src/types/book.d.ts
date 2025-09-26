@@ -1,7 +1,7 @@
 export interface Book {
   id: string;
   anioPublicacion: string;
-  author: string;
+  autor: string;
   descripcion: string;
   editorial: string;
   imagen: string;
