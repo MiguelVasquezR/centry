@@ -14,7 +14,7 @@ const CardBook = ({ book }: { book: Book }) => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<boolean>(false);
   const [deleteBook, { isLoading: isDeleting }] = useDeleteBookMutation();
 
-  const router = useRouter()
+  const router = useRouter();
 
   const handleDelete = async () => {
     try {
@@ -28,13 +28,24 @@ const CardBook = ({ book }: { book: Book }) => {
   };
 
   return (
-    <div className="card p-5 is-relative is-clickable" onClick={(()=> router.push(`/book/${book.id}`))}>
+    <div
+      className="card p-5 is-relative is-clickable"
+      onClick={(e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        router.push(`/book/${book.id}`);
+      }}
+    >
       <div style={{ position: "absolute", right: 12, top: 12 }}>
         <div className={clsx("dropdown ", { "is-active": isActiveMenu })}>
           <div className="dropdown-trigger">
             <EllipsisVertical
               className="is-clickable"
-              onClick={() => setIsActiveMenu(!isActiveMenu)}
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                setIsActiveMenu(!isActiveMenu);
+              }}
             />
           </div>
           <div className="dropdown-menu" id="dropdown-menu" role="menu">

@@ -1,6 +1,7 @@
 "use client";
 import CardBook from "@/src/component/CardBook";
 import Pagination from "@/src/component/Pagination";
+import { useAuth } from "@/src/contexts/AuthContext";
 import { useLazyFetchBooksQuery } from "@/src/redux/store/api/booksApi";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -8,7 +9,11 @@ import toast from "react-hot-toast";
 
 const BookLibraryView = () => {
   const [page, setPage] = useState<number>(1);
-  const [limit, setLimit] = useState<number>(10);
+  const [limit, setLimit] = useState<number>(20);
+
+  const { user } = useAuth();
+
+  console.log(user);
 
   const [getMore, { data: dataBooks, isLoading: booksIsLoading, error }] =
     useLazyFetchBooksQuery();
@@ -18,6 +23,10 @@ const BookLibraryView = () => {
   useEffect(() => {
     getMore({ page: page, limit });
   }, []);
+
+  useEffect(() => {
+    handleChangePage(page);
+  }, [page, limit]);
 
   useEffect(() => {
     if (error) {
@@ -71,6 +80,24 @@ const BookLibraryView = () => {
                 <option>Repisa</option>
                 <option>Lateral</option>
                 <option>Central</option>
+              </select>
+            </div>
+
+            <div className="select mx-2">
+              <select
+                onChange={(e) => {
+                  e.preventDefault();
+                  setLimit(parseInt(e.currentTarget.value));
+                }}
+                defaultValue={20}
+              >
+                {Array.from({ length: 10 }, (_, i) => i + 1) // 1 al 10
+                  .concat(Array.from({ length: 9 }, (_, i) => (i + 2) * 10)) // 20 al 100
+                  .map((num) => (
+                    <option key={num} value={num}>
+                      {num}
+                    </option>
+                  ))}
               </select>
             </div>
           </div>

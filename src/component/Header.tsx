@@ -7,10 +7,13 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/src/contexts/AuthContext";
 import { signOutUser } from "@/src/firebase/auth";
 import toast from "react-hot-toast";
+import clsx from "clsx";
+import { useState } from "react";
 
 const Header = () => {
   const router = useRouter();
   const { user, isAuthenticated } = useAuth();
+  const [userMenuActive, setUserMenuActive] = useState<boolean>(false);
 
   const handleLogout = async () => {
     try {
@@ -47,6 +50,18 @@ const Header = () => {
       {isAuthenticated && (
         <ul className="navbar-menu">
           <li
+            onClick={() => router.push("/users")}
+            className="navbar-item is-clickable has-text-white is-underlined has-text-weight-bold"
+          >
+            Publicaciones
+          </li>
+          <li
+            onClick={() => router.push("/users")}
+            className="navbar-item is-clickable has-text-white is-underlined has-text-weight-bold"
+          >
+            Eventos
+          </li>
+          <li
             onClick={() => router.push("/book")}
             className="navbar-item is-clickable has-text-white is-underlined has-text-weight-bold"
           >
@@ -54,10 +69,6 @@ const Header = () => {
           </li>
           <li className="navbar-item is-clickable has-text-white is-underlined has-text-weight-bold">
             Películas
-            <Link href={"#"} />
-          </li>
-          <li className="navbar-item is-clickable has-text-white is-underlined has-text-weight-bold">
-            Usuarios
             <Link href={"#"} />
           </li>
         </ul>
@@ -70,21 +81,48 @@ const Header = () => {
           )}
 
           {isAuthenticated ? (
-            <div className="is-flex is-justify-content-center is-align-items-center is-gap-2">
-              <div className="is-flex is-justify-content-center is-align-items-center is-gap-1">
-                <User color="white" size={20} />
-                <p className="has-text-white" style={{ fontSize: 12 }}>
-                  {user?.displayName || user?.email}
-                </p>
-              </div>
+            <div
+              onClick={() => {
+                setUserMenuActive(!userMenuActive);
+              }}
+              className="is-flex is-justify-content-center is-align-items-center is-gap-2 is-clickable mr-5"
+            >
               <div
-                onClick={handleLogout}
-                className="is-flex is-justify-content-center is-align-items-center is-gap-2 is-clickable"
+                className={clsx("dropdown", { "is-active": userMenuActive })}
               >
-                <LogOut color="white" size={20} />
-                <p className="has-text-white" style={{ fontSize: 10 }}>
-                  Cerrar Sesión
-                </p>
+                <div className="dropdown-trigger">
+                  <div className="is-flex is-justify-content-center is-align-items-center is-gap-1">
+                    <User color="white" size={20} />
+                    <p className="has-text-white" style={{ fontSize: 12 }}>
+                      {user?.displayName || user?.email}
+                    </p>
+                  </div>
+                </div>
+                <div className="dropdown-menu" id="dropdown-menu" role="menu">
+                  <div className="dropdown-content">
+                    <Link className="dropdown-item" href={"#"}>
+                      Administración
+                    </Link>
+                    <Link className="dropdown-item" href={"#"}>
+                      Calendario
+                    </Link>
+                    <Link className="dropdown-item" href={"#"}>
+                      Mi perfil
+                    </Link>
+                    <hr className="dropdown-divider" />
+
+                    <Link
+                      className=" dropdown-item
+                      is-flex is-justify-content-center is-align-items-center is-gap-2 is-clickable"
+                      type="button"
+                      onClick={handleLogout}
+                      href={"/login"}
+                    >
+                      <LogOut color="black" size={20} />
+                      <p>Cerrar Sesión</p>
+                    </Link>
+                  </div>
+                </div>
               </div>
             </div>
           ) : (
