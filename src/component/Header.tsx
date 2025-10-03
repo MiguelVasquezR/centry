@@ -50,7 +50,7 @@ const Header = () => {
       {isAuthenticated && (
         <ul className="navbar-menu">
           <li
-            onClick={() => router.push("/users")}
+            onClick={() => router.push("/updates")}
             className="navbar-item is-clickable has-text-white is-underlined has-text-weight-bold"
           >
             Publicaciones

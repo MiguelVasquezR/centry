@@ -115,3 +115,16 @@ export const getDataById = async (collectionName: string, id: string) => {
     console.error("Error al obtener el documento por ID:", error);
   }
 };
+
+export const getData = async (collectionName: string) => {
+  try {
+    const querySnapshot = await getDocs(collection(firestore, collectionName));
+    return querySnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+  } catch (error) {
+    console.error("Error al obtener los datos:", error);
+    throw error;
+  }
+};
