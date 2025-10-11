@@ -1,5 +1,6 @@
 import { EllipsisVertical } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 
 const Users = () => {
   const CardUser = () => {
@@ -43,7 +44,9 @@ const Users = () => {
         </div>
 
         <div className="">
-          <button className="button is-primary has-text-white">Agregar</button>
+          <Link href="/users/add" className="button is-primary has-text-white">
+            Agregar
+          </Link>
         </div>
       </div>
 

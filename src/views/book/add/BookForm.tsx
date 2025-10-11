@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, ImagePlus, Info, Layers, ListChecks, Sparkles } from "lucide-react";
 import {
   useCreateBookMutation,
   useUpdateBookMutation,
@@ -45,6 +45,7 @@ const BookForm = ({ bookId, mode = "add" }: BookFormProps) => {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>("");
   const [isUploading, setIsUploading] = useState(false);
+  const [isDragActive, setIsDragActive] = useState(false);
   const [addBook, { isLoading: isAddingBook }] = useCreateBookMutation();
   const [updateBook, { isLoading: isUpdatingBook }] = useUpdateBookMutation();
 
@@ -64,6 +65,7 @@ const BookForm = ({ bookId, mode = "add" }: BookFormProps) => {
     handleSubmit,
     formState: { errors },
     reset,
+    watch,
   } = useForm<BookFormData>({
     resolver: zodResolver(bookSchema),
     defaultValues: {
@@ -103,17 +105,73 @@ const BookForm = ({ bookId, mode = "add" }: BookFormProps) => {
     }
   }, [book, mode, reset]);
 
+  const watchedTitle = watch("titulo");
+  const watchedAuthor = watch("author");
+  const watchedDescripcion = watch("descripcion");
+  const watchedEditorial = watch("editorial");
+  const watchedYear = watch("anioPublicacion");
+  const watchedPages = watch("numPag");
+  const watchedType = watch("tipo");
+  const watchedShelf = watch("ubicacion.repisa");
+  const watchedCol = watch("ubicacion.col");
+  const watchedRow = watch("ubicacion.row");
+
+  const descriptionValue = watchedDescripcion || "";
+  const descriptionWordCount = descriptionValue
+    ? descriptionValue.trim().split(/\s+/).filter(Boolean).length
+    : 0;
+
+  const completionChecklist = [
+    Boolean(watchedTitle),
+    Boolean(watchedAuthor),
+    Boolean(descriptionValue && descriptionValue.length >= 10),
+    Boolean(watchedEditorial),
+    Boolean(watchedYear),
+    Boolean(watchedType),
+    Boolean(watchedShelf),
+    Boolean(imagePreview),
+  ];
+
+  const completion =
+    completionChecklist.length > 0
+      ? Math.round(
+          (completionChecklist.filter(Boolean).length /
+            completionChecklist.length) *
+            100
+        )
+      : 0;
+
+  const setPreviewFromFile = (file: File) => {
+    setSelectedImage(file);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagePreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      setSelectedImage(file);
+      setPreviewFromFile(file);
+    }
+  };
 
-      // Create preview
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+  const handleDragOver = (event: React.DragEvent<HTMLLabelElement>) => {
+    event.preventDefault();
+    setIsDragActive(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragActive(false);
+  };
+
+  const handleDrop = (event: React.DragEvent<HTMLLabelElement>) => {
+    event.preventDefault();
+    setIsDragActive(false);
+    const file = event.dataTransfer.files?.[0];
+    if (file) {
+      setPreviewFromFile(file);
     }
   };
 
@@ -200,294 +258,461 @@ const BookForm = ({ bookId, mode = "add" }: BookFormProps) => {
   return (
     <div className="container">
       <br />
-      <form onSubmit={handleSubmit(onFormSubmit)}>
-        <div className="is-flex is-flex-direction-row is-justify-content-space-between is-align-items-center">
-          <ChevronLeft
-            className="is-clickable"
-            size={32}
-            onClick={() => {
-              router.back();
-            }}
-          />
 
-          <h2 className="title is-4 has-text-centered mb-5">
-            {mode === "edit" ? "Editar Libro" : "Agregar Nuevo Libro"}
-          </h2>
-        </div>
-
-        <br />
-
-        {/* Image Upload Section */}
-        <div className="field">
-          <label className="label">Imagen del Libro</label>
-
-          <div className="is-flex is-flex-direction-row is-justify-content-space-between">
-            <div className="file has-name is-fullwidth">
-              <label className="file-label">
-                <input
-                  className="file-input"
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageSelect}
-                />
-                <span className="file-cta">
-                  <span className="file-icon">
-                    <i className="fas fa-upload"></i>
-                  </span>
-                  <span className="file-label">Seleccionar imagen...</span>
-                </span>
-                <span className="file-name">
-                  {selectedImage
-                    ? selectedImage.name
-                    : "No hay archivo seleccionado"}
-                </span>
-              </label>
-            </div>
-            {imagePreview && (
-              <div className="mt-3">
-                <Image
-                  src={imagePreview}
-                  alt="Preview"
-                  width={164}
-                  height={164}
-                  className="image"
-                  style={{ objectFit: "cover" }}
-                />
+      <div className="card mb-5">
+        <div className="card-content">
+          <div className="level is-align-items-center is-mobile">
+            <div className="level-left">
+              <div className="level-item">
+                <button
+                  type="button"
+                  className="button is-light is-medium"
+                  onClick={() => router.back()}
+                >
+                  <ChevronLeft className="mr-2" />
+                  Volver
+                </button>
               </div>
-            )}
-          </div>
-        </div>
-
-        {/* Title and Author */}
-        <div className="columns">
-          <div className="column">
-            <div className="field">
-              <label className="label">Título *</label>
-              <div className="control">
-                <input
-                  className={`input ${errors.titulo ? "is-danger" : ""}`}
-                  type="text"
-                  placeholder="Título del libro"
-                  {...register("titulo")}
-                />
-              </div>
-              {errors.titulo && (
-                <p className="help is-danger">{errors.titulo.message}</p>
-              )}
-            </div>
-          </div>
-          <div className="column">
-            <div className="field">
-              <label className="label">Autor *</label>
-              <div className="control">
-                <input
-                  className={`input ${errors.author ? "is-danger" : ""}`}
-                  type="text"
-                  placeholder="Nombre del autor"
-                  {...register("author")}
-                />
-              </div>
-              {errors.author && (
-                <p className="help is-danger">{errors.author.message}</p>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Description */}
-        <div className="field">
-          <label className="label">Descripción *</label>
-          <div className="control">
-            <textarea
-              className={`textarea ${errors.descripcion ? "is-danger" : ""}`}
-              placeholder="Descripción del libro"
-              rows={4}
-              {...register("descripcion")}
-              style={{ minHeight: 120, maxHeight: 360 }}
-            />
-          </div>
-          {errors.descripcion && (
-            <p className="help is-danger">{errors.descripcion.message}</p>
-          )}
-        </div>
-
-        {/* Editorial and Year */}
-        <div className="columns">
-          <div className="column">
-            <div className="field">
-              <label className="label">Editorial *</label>
-              <div className="control">
-                <input
-                  className={`input ${errors.editorial ? "is-danger" : ""}`}
-                  type="text"
-                  placeholder="Editorial"
-                  {...register("editorial")}
-                />
-              </div>
-              {errors.editorial && (
-                <p className="help is-danger">{errors.editorial.message}</p>
-              )}
-            </div>
-          </div>
-          <div className="column">
-            <div className="field">
-              <label className="label">Año de Publicación *</label>
-              <div className="control">
-                <input
-                  className={`input ${
-                    errors.anioPublicacion ? "is-danger" : ""
-                  }`}
-                  type="text"
-                  placeholder="Año"
-                  {...register("anioPublicacion")}
-                />
-              </div>
-              {errors.anioPublicacion && (
-                <p className="help is-danger">
-                  {errors.anioPublicacion.message}
-                </p>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Number of Pages and Type */}
-        <div className="columns">
-          <div className="column">
-            <div className="field">
-              <label className="label">Número de Páginas *</label>
-              <div className="control">
-                <input
-                  className={`input ${errors.numPag ? "is-danger" : ""}`}
-                  type="text"
-                  placeholder="Número de páginas"
-                  {...register("numPag")}
-                />
-              </div>
-              {errors.numPag && (
-                <p className="help is-danger">{errors.numPag.message}</p>
-              )}
-            </div>
-          </div>
-          <div className="column">
-            <div className="field">
-              <label className="label">Tipo *</label>
-              <div className="control">
-                <div className="select is-fullwidth">
-                  <select
-                    className={errors.tipo ? "is-danger" : ""}
-                    {...register("tipo")}
-                  >
-                    <option value="">Seleccionar tipo</option>
-                    <option value="Novela">Novela</option>
-                    <option value="Ensayo">Ensayo</option>
-                    <option value="Poesía">Poesía</option>
-                    <option value="Teatro">Teatro</option>
-                    <option value="Biografía">Biografía</option>
-                    <option value="Historia">Historia</option>
-                    <option value="Ciencia">Ciencia</option>
-                    <option value="Técnico">Técnico</option>
-                    <option value="Infantil">Infantil</option>
-                    <option value="Otro">Otro</option>
-                  </select>
-                </div>
-              </div>
-              {errors.tipo && (
-                <p className="help is-danger">{errors.tipo.message}</p>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Location Section */}
-        <div className="field">
-          <label className="label">Ubicación *</label>
-          <div className="columns">
-            <div className="column">
-              <div className="field">
-                <label className="label">Repisa</label>
-                <div className="control">
-                  <div className="select is-fullwidth">
-                    <select
-                      className={errors.ubicacion?.repisa ? "is-danger" : ""}
-                      {...register("ubicacion.repisa")}
-                    >
-                      <option value="">Seleccionar repisa</option>
-                      <option value="1">Lateral</option>
-                      <option value="2">Central</option>
-                    </select>
+              <div className="level-item">
+                <div>
+                  <p className="title is-4 mb-1">
+                    {mode === "edit"
+                      ? "Editar registro de libro"
+                      : "Agregar nuevo libro"}
+                  </p>
+                  <p className="subtitle is-6 has-text-grey">
+                    Completa la ficha bibliográfica para mantener ordenada la biblioteca.
+                  </p>
+                  <div className="tags">
+                    <span className="tag is-info is-light">
+                      <Sparkles size={14} style={{ marginRight: 6 }} />
+                      Curaduría editorial
+                    </span>
+                    <span className="tag is-light">
+                      <ListChecks size={14} style={{ marginRight: 6 }} />
+                      {completion}% completado
+                    </span>
                   </div>
                 </div>
-                {errors.ubicacion?.repisa && (
-                  <p className="help is-danger">
-                    {errors.ubicacion.repisa.message}
-                  </p>
-                )}
               </div>
             </div>
-            <div className="column">
-              <div className="field">
-                <label className="label">Columna</label>
-                <div className="control">
-                  <input
-                    className={`input ${
-                      errors.ubicacion?.col ? "is-danger" : ""
-                    }`}
-                    type="number"
-                    placeholder="Columna"
-                    min="1"
-                    {...register("ubicacion.col", { valueAsNumber: true })}
-                  />
-                </div>
-                {errors.ubicacion?.col && (
-                  <p className="help is-danger">
-                    {errors.ubicacion.col.message}
-                  </p>
-                )}
-              </div>
-            </div>
-            <div className="column">
-              <div className="field">
-                <label className="label">Fila</label>
-                <div className="control">
-                  <input
-                    className={`input ${
-                      errors.ubicacion?.row ? "is-danger" : ""
-                    }`}
-                    type="number"
-                    placeholder="Fila"
-                    min="1"
-                    {...register("ubicacion.row", { valueAsNumber: true })}
-                  />
-                </div>
-                {errors.ubicacion?.row && (
-                  <p className="help is-danger">
-                    {errors.ubicacion.row.message}
-                  </p>
-                )}
+            <div className="level-right is-hidden-mobile">
+              <div className="level-item" style={{ minWidth: "220px" }}>
+                <progress
+                  className="progress is-primary is-small"
+                  value={completion}
+                  max={100}
+                >
+                  {completion}%
+                </progress>
+                <p className="is-size-7 has-text-grey has-text-right mt-1">
+                  Guarda el registro al llegar al 100 %
+                </p>
               </div>
             </div>
           </div>
-        </div>
-
-        {/* Submit Button */}
-        <div className="field is-grouped is-grouped-centered">
-          <div className="control">
-            <button
-              type="submit"
-              className={`button is-primary is-large is-size-5 ${
-                isUploading || isAddingBook || isUpdatingBook
-                  ? "is-loading"
-                  : ""
-              }`}
-              disabled={isUploading || isAddingBook || isUpdatingBook}
+          <div className="is-hidden-tablet mt-3">
+            <progress
+              className="progress is-primary is-small"
+              value={completion}
+              max={100}
             >
-              {mode === "edit" ? "Actualizar Libro" : "Agregar Libro"}
-            </button>
+              {completion}%
+            </progress>
+            <p className="is-size-7 has-text-grey mt-1">
+              Guarda el registro al llegar al 100 %
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <form onSubmit={handleSubmit(onFormSubmit)}>
+        <div className="columns is-variable is-5">
+          <div className="column is-8-desktop is-12-tablet">
+            <div className="card mb-5">
+              <div className="card-content">
+                <div className="is-flex is-justify-content-space-between is-align-items-center mb-3">
+                  <div>
+                    <h3 className="title is-5 mb-1">Ficha principal</h3>
+                    <p className="is-size-7 has-text-grey">
+                      Identifica el libro con información esencial.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="columns is-variable is-4">
+                  <div className="column">
+                    <div className="field">
+                      <label className="label">Título *</label>
+                      <div className="control">
+                        <input
+                          className={`input ${errors.titulo ? "is-danger" : ""}`}
+                          type="text"
+                          placeholder="Ej. La casa de los espíritus"
+                          {...register("titulo")}
+                        />
+                      </div>
+                      {errors.titulo && (
+                        <p className="help is-danger">{errors.titulo.message}</p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="column">
+                    <div className="field">
+                      <label className="label">Autor *</label>
+                      <div className="control">
+                        <input
+                          className={`input ${errors.author ? "is-danger" : ""}`}
+                          type="text"
+                          placeholder="Nombre y apellido"
+                          {...register("author")}
+                        />
+                      </div>
+                      {errors.author && (
+                        <p className="help is-danger">{errors.author.message}</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="field">
+                  <div className="is-flex is-align-items-center is-justify-content-space-between mb-2">
+                    <label className="label mb-0">Descripción *</label>
+                    <span className="tag is-light is-info">
+                      {descriptionWordCount}{" "}
+                      {descriptionWordCount === 1 ? "palabra" : "palabras"}
+                    </span>
+                  </div>
+                  <div className="control">
+                    <textarea
+                      className={`textarea ${
+                        errors.descripcion ? "is-danger" : ""
+                      }`}
+                      placeholder="Describe la trama, el tono o la relevancia del libro en no más de 3 párrafos."
+                      rows={6}
+                      {...register("descripcion")}
+                      style={{ minHeight: 140, maxHeight: 320 }}
+                    />
+                  </div>
+                  {errors.descripcion && (
+                    <p className="help is-danger">{errors.descripcion.message}</p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="card mb-5">
+              <div className="card-content">
+                <h3 className="title is-5 mb-3">Detalles editoriales</h3>
+                <div className="columns is-variable is-4">
+                  <div className="column">
+                    <div className="field">
+                      <label className="label">Editorial *</label>
+                      <div className="control">
+                        <input
+                          className={`input ${errors.editorial ? "is-danger" : ""}`}
+                          type="text"
+                          placeholder="Editorial"
+                          {...register("editorial")}
+                        />
+                      </div>
+                      {errors.editorial && (
+                        <p className="help is-danger">
+                          {errors.editorial.message}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="column">
+                    <div className="field">
+                      <label className="label">Año de publicación *</label>
+                      <div className="control">
+                        <input
+                          className={`input ${
+                            errors.anioPublicacion ? "is-danger" : ""
+                          }`}
+                          type="text"
+                          placeholder="Ej. 1992"
+                          maxLength={4}
+                          {...register("anioPublicacion")}
+                        />
+                      </div>
+                      {errors.anioPublicacion && (
+                        <p className="help is-danger">
+                          {errors.anioPublicacion.message}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="columns is-variable is-4">
+                  <div className="column">
+                    <div className="field">
+                      <label className="label">Número de páginas *</label>
+                      <div className="control">
+                        <input
+                          className={`input ${errors.numPag ? "is-danger" : ""}`}
+                          type="text"
+                          placeholder="Ej. 384"
+                          {...register("numPag")}
+                        />
+                      </div>
+                      {errors.numPag && (
+                        <p className="help is-danger">{errors.numPag.message}</p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="column">
+                    <div className="field">
+                      <label className="label">Tipo *</label>
+                      <div className="control">
+                        <div className="select is-fullwidth">
+                          <select
+                            className={errors.tipo ? "is-danger" : ""}
+                            {...register("tipo")}
+                          >
+                            <option value="">Seleccionar tipo</option>
+                            <option value="Novela">Novela</option>
+                            <option value="Ensayo">Ensayo</option>
+                            <option value="Poesía">Poesía</option>
+                            <option value="Teatro">Teatro</option>
+                            <option value="Biografía">Biografía</option>
+                            <option value="Historia">Historia</option>
+                            <option value="Ciencia">Ciencia</option>
+                            <option value="Técnico">Técnico</option>
+                            <option value="Infantil">Infantil</option>
+                            <option value="Otro">Otro</option>
+                          </select>
+                        </div>
+                      </div>
+                      {errors.tipo && (
+                        <p className="help is-danger">{errors.tipo.message}</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="card mb-5">
+              <div className="card-content">
+                <div className="is-flex is-align-items-center is-justify-content-space-between mb-3">
+                  <h3 className="title is-5 mb-0">
+                    <span className="icon-text">
+                      <span className="icon">
+                        <Layers size={18} />
+                      </span>
+                      <span>Ubicación en biblioteca</span>
+                    </span>
+                  </h3>
+                  <span className="tag is-light is-size-7">
+                    Facilita la entrega presencial
+                  </span>
+                </div>
+                <div className="columns is-variable is-4">
+                  <div className="column is-4">
+                    <div className="field">
+                      <label className="label">Repisa *</label>
+                      <div className="control">
+                        <div className="select is-fullwidth">
+                          <select
+                            className={errors.ubicacion?.repisa ? "is-danger" : ""}
+                            {...register("ubicacion.repisa")}
+                          >
+                            <option value="">Seleccionar repisa</option>
+                            <option value="Lateral">Lateral</option>
+                            <option value="Central">Central</option>
+                            <option value="Archivo">Archivo</option>
+                          </select>
+                        </div>
+                      </div>
+                      {errors.ubicacion?.repisa && (
+                        <p className="help is-danger">
+                          {errors.ubicacion.repisa.message}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="column is-4">
+                    <div className="field">
+                      <label className="label">Columna *</label>
+                      <div className="control">
+                        <input
+                          className={`input ${
+                            errors.ubicacion?.col ? "is-danger" : ""
+                          }`}
+                          type="number"
+                          min="1"
+                          placeholder="Ej. 3"
+                          {...register("ubicacion.col", { valueAsNumber: true })}
+                        />
+                      </div>
+                      {errors.ubicacion?.col && (
+                        <p className="help is-danger">
+                          {errors.ubicacion.col.message}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="column is-4">
+                    <div className="field">
+                      <label className="label">Fila *</label>
+                      <div className="control">
+                        <input
+                          className={`input ${
+                            errors.ubicacion?.row ? "is-danger" : ""
+                          }`}
+                          type="number"
+                          min="1"
+                          placeholder="Ej. 2"
+                          {...register("ubicacion.row", { valueAsNumber: true })}
+                        />
+                      </div>
+                      {errors.ubicacion?.row && (
+                        <p className="help is-danger">
+                          {errors.ubicacion.row.message}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="card">
+              <div className="card-content">
+                <div className="is-flex is-align-items-center is-justify-content-space-between is-flex-wrap-wrap">
+                  <p className="is-size-7 has-text-grey">
+                    Verifica los datos antes de guardar. Siempre podrás editar el registro posteriormente.
+                  </p>
+                  <button
+                    type="submit"
+                    className={`button is-primary is-medium has-text-weight-semibold ${
+                      isUploading || isAddingBook || isUpdatingBook
+                        ? "is-loading"
+                        : ""
+                    }`}
+                    disabled={isUploading || isAddingBook || isUpdatingBook}
+                  >
+                    {mode === "edit" ? "Guardar cambios" : "Registrar libro"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="column is-4-desktop is-12-tablet">
+            <div style={{ position: "sticky", top: "2rem" }}>
+              <div className="card mb-4">
+                <div className="card-content">
+                  <h3 className="title is-5">Carátula</h3>
+                  <p className="is-size-7 has-text-grey">
+                    La imagen ayuda a reconocer el libro rápidamente en la biblioteca digital.
+                  </p>
+                  <label
+                    htmlFor="book-cover"
+                    className={`is-flex is-flex-direction-column is-align-items-center is-justify-content-center has-text-centered mt-4 p-5 ${
+                      isDragActive ? "has-background-primary-light" : "has-background-light"
+                    }`}
+                    style={{
+                      border: `2px dashed ${isDragActive ? "#485fc7" : "#d7d8dd"}`,
+                      borderRadius: "18px",
+                      transition: "border-color 0.2s ease",
+                      cursor: "pointer",
+                    }}
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
+                  >
+                    <ImagePlus size={36} className="mb-2" />
+                    <span className="is-size-6 has-text-weight-semibold">
+                      Arrastra la portada aquí
+                    </span>
+                    <span className="is-size-7 has-text-grey">
+                      o <span className="has-text-link">haz clic para buscarla</span>
+                    </span>
+                    <input
+                      id="book-cover"
+                      className="is-hidden"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageSelect}
+                    />
+                  </label>
+                  <p className="is-size-7 has-text-grey mt-2">
+                    Formato recomendado: JPG o PNG (mínimo 600 × 900 px).
+                  </p>
+                  {imagePreview && (
+                    <figure
+                      className="image is-3by4 mt-4"
+                      style={{
+                        maxWidth: "240px",
+                        margin: "0 auto",
+                        borderRadius: "16px",
+                        overflow: "hidden",
+                        position: "relative",
+                      }}
+                    >
+                      <Image
+                        src={imagePreview}
+                        alt="Previsualización de portada"
+                        fill
+                        sizes="240px"
+                        style={{ objectFit: "cover" }}
+                      />
+                    </figure>
+                  )}
+                </div>
+              </div>
+
+              <div className="card">
+                <div className="card-content">
+                  <h4 className="title is-6 mb-3">Resumen del registro</h4>
+                  <div className="notification is-light">
+                    <p className="is-size-7">
+                      <strong>Título:</strong> {watchedTitle || "Sin título"}
+                    </p>
+                    <p className="is-size-7">
+                      <strong>Autoría:</strong>{" "}
+                      {watchedAuthor || "Autor por definir"}
+                    </p>
+                    <p className="is-size-7">
+                      <strong>Editorial:</strong>{" "}
+                      {watchedEditorial || "Sin editorial"}
+                    </p>
+                    <p className="is-size-7">
+                      <strong>Páginas:</strong> {watchedPages || "—"}
+                    </p>
+                    <p className="is-size-7">
+                      <strong>Ubicación:</strong>{" "}
+                      {watchedShelf
+                        ? `${watchedShelf}, Col. ${watchedCol}, Fila ${watchedRow}`
+                        : "Sin asignar"}
+                    </p>
+                  </div>
+                  <progress
+                    className="progress is-primary is-small"
+                    value={completion}
+                    max={100}
+                  >
+                    {completion}%
+                  </progress>
+                  <p className="is-size-7 has-text-grey">
+                    Avance del registro bibliográfico.
+                  </p>
+                  <div className="notification is-info is-light mt-3 is-flex is-align-items-center">
+                    <Info size={14} style={{ marginRight: 8 }} />
+                    <span className="is-size-7">
+                      Verifica que la ubicación coincida con la etiqueta física del libro.
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </form>
-      <br />
       <br />
     </div>
   );

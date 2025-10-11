@@ -1,14 +1,23 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useEffect, useMemo, useState } from "react";
+import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, Upload, X } from "lucide-react";
+import {
+  ChevronLeft,
+  Upload,
+  X,
+  Info,
+  ListChecks,
+  ImagePlus,
+  Sparkles,
+} from "lucide-react";
 import Image from "next/image";
 import { Book } from "../../../types/book";
 import TipTapEditor from "../../../component/TipTapEditor";
+import Select, { StylesConfig } from "react-select";
 import { useCreatePostMutation } from "../../../redux/store/api/postsApi";
 import { useLazyFetchBooksQuery } from "../../../redux/store/api/booksApi";
 
@@ -24,6 +33,7 @@ const postSchema = z.object({
 });
 
 type PostFormData = z.infer<typeof postSchema>;
+type BookOption = { value: string; label: string };
 
 const CreatePostView = () => {
   const router = useRouter();
@@ -31,6 +41,7 @@ const CreatePostView = () => {
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [isDragActive, setIsDragActive] = useState(false);
 
   const [createPost, { isLoading: isAddingPost }] = useCreatePostMutation();
   const [fetchBooks, { data: booksResponse }] = useLazyFetchBooksQuery();
@@ -47,6 +58,7 @@ const CreatePostView = () => {
     formState: { errors },
     setValue,
     watch,
+    control,
   } = useForm<PostFormData>({
     resolver: zodResolver(postSchema),
     defaultValues: {
@@ -61,24 +73,148 @@ const CreatePostView = () => {
   });
 
   const watchedVisibility = watch("preference.visibleBy");
+  const watchedTitle = watch("title");
+  const watchedBook = watch("preference.book");
+  const plainContent = content.replace(/<[^>]*>/g, " ").trim();
+  const wordCount = plainContent ? plainContent.split(/\s+/).length : 0;
+  const completion = Math.min(
+    100,
+    Math.round(
+      ((watchedTitle ? 1 : 0) +
+        (plainContent.length >= 10 ? 1 : 0) +
+        (selectedImages.length > 0 ? 1 : 0) +
+        (watchedBook ? 1 : 0)) *
+        25
+    )
+  );
 
-  const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(event.target.files || []);
-    if (files.length + selectedImages.length > 5) {
+  const addImages = (files: File[]) => {
+    const validFiles = files.filter((file) => file.type.startsWith("image/"));
+
+    if (!validFiles.length) {
+      alert("Solo se permiten archivos de imagen.");
+      return;
+    }
+
+    const availableSlots = Math.max(0, 5 - selectedImages.length);
+
+    if (availableSlots === 0) {
       alert("Máximo 5 imágenes permitidas");
       return;
     }
 
-    setSelectedImages((prev) => [...prev, ...files]);
+    const filesToAdd = validFiles.slice(0, availableSlots);
 
-    // Create previews
-    files.forEach((file) => {
+    setSelectedImages((prev) => [...prev, ...filesToAdd]);
+
+    filesToAdd.forEach((file) => {
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreviews((prev) => [...prev, reader.result as string]);
       };
       reader.readAsDataURL(file);
     });
+
+    if (validFiles.length > filesToAdd.length) {
+      alert("Se alcanzó el límite de 5 imágenes. Algunas no se agregaron.");
+    }
+  };
+  const bookOptions = useMemo<BookOption[]>(
+    () =>
+      books.map((book: Book) => ({
+        value: book.id,
+        label: `${book.titulo} — ${book.author}`,
+      })),
+    [books]
+  );
+
+  const selectStyles: StylesConfig<BookOption, false> = {
+    control: (provided, state) => ({
+      ...provided,
+      borderRadius: 12,
+      borderColor: state.isFocused ? "#3b5bfd" : "#d7d8dd",
+      boxShadow: state.isFocused ? "0 0 0 1px #3b5bfd33" : "none",
+      padding: "4px",
+      minHeight: "44px",
+      ":hover": {
+        borderColor: "#3b5bfd",
+      },
+    }),
+    valueContainer: (provided) => ({
+      ...provided,
+      padding: "0 0.75rem",
+    }),
+    placeholder: (provided) => ({
+      ...provided,
+      color: "#9ca3af",
+    }),
+    singleValue: (provided) => ({
+      ...provided,
+      color: "#1f2937",
+      fontWeight: 500,
+    }),
+    option: (provided, state) => ({
+      ...provided,
+      padding: "10px 14px",
+      borderRadius: 8,
+      backgroundColor: state.isFocused
+        ? "rgba(59, 91, 253, 0.08)"
+        : state.isSelected
+          ? "#3b5bfd"
+          : "transparent",
+      color: state.isSelected ? "#fff" : "#1f2937",
+      cursor: "pointer",
+    }),
+    menu: (provided) => ({
+      ...provided,
+      borderRadius: 12,
+      boxShadow: "0 18px 40px rgba(15, 23, 42, 0.12)",
+      overflow: "hidden",
+      border: "1px solid #eef1f8",
+    }),
+    menuList: (provided) => ({
+      ...provided,
+      padding: "8px",
+    }),
+    indicatorSeparator: () => ({
+      display: "none",
+    }),
+    dropdownIndicator: (provided, state) => ({
+      ...provided,
+      color: state.isFocused ? "#3b5bfd" : "#94a3b8",
+      ":hover": {
+        color: "#3b5bfd",
+      },
+    }),
+    clearIndicator: (provided) => ({
+      ...provided,
+      color: "#94a3b8",
+      ":hover": {
+        color: "#ef4444",
+      },
+    }),
+  };
+
+  const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+    addImages(files);
+    event.target.value = "";
+  };
+
+  const handleDragOver = (event: React.DragEvent<HTMLLabelElement>) => {
+    event.preventDefault();
+    setIsDragActive(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragActive(false);
+  };
+
+  const handleDrop = (event: React.DragEvent<HTMLLabelElement>) => {
+    event.preventDefault();
+    setIsDragActive(false);
+    const files = Array.from(event.dataTransfer.files || []);
+    addImages(files);
   };
 
   const removeImage = (index: number) => {
@@ -152,214 +288,400 @@ const CreatePostView = () => {
   return (
     <div className="container">
       <br />
-      <div className="level mb-6">
-        <div className="level-left">
-          <div className="level-item">
-            <button
-              onClick={() => router.back()}
-              className="button is-light is-medium mr-4"
+      <div className="card mb-5">
+        <div className="card-content">
+          <div className="level is-align-items-center is-mobile">
+            <div className="level-left">
+              <div className="level-item">
+                <button
+                  type="button"
+                  onClick={() => router.back()}
+                  className="button is-light is-medium mr-4"
+                >
+                  <ChevronLeft className="mr-2" />
+                  Volver
+                </button>
+              </div>
+              <div className="level-item">
+                <div>
+                  <p className="title is-4 mb-1">Crear nueva publicación</p>
+                  <p className="subtitle is-6 has-text-grey mb-3">
+                    Comparte una actualización editorial con la comunidad.
+                  </p>
+                  <div className="tags">
+                    <span className="tag is-info is-light">
+                      <Sparkles size={14} style={{ marginRight: 6 }} />
+                      Inspira a tu comunidad
+                    </span>
+                    <span className="tag is-light">
+                      <ListChecks size={14} style={{ marginRight: 6 }} />
+                      {completion}% completado
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="level-right is-hidden-mobile">
+              <div className="level-item" style={{ minWidth: "220px" }}>
+                <progress
+                  className="progress is-primary is-small"
+                  value={completion}
+                  max={100}
+                >
+                  {completion}%
+                </progress>
+                <p className="is-size-7 has-text-grey has-text-right mt-1">
+                  Completa los campos para publicar
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="is-hidden-tablet mt-3">
+            <progress
+              className="progress is-primary is-small"
+              value={completion}
+              max={100}
             >
-              <ChevronLeft className="mr-2" />
-            </button>
+              {completion}%
+            </progress>
+            <p className="is-size-7 has-text-grey mt-1">
+              Completa los campos para publicar
+            </p>
           </div>
         </div>
       </div>
 
-      <div className="columns">
-        <div className="column is-8">
+      <div className="columns is-variable is-5">
+        <div className="column is-8-desktop is-12-tablet">
           <form onSubmit={handleSubmit(onFormSubmit)}>
-            {/* Title */}
-            <div className="field">
-              <div className="control">
-                <input
-                  {...register("title")}
-                  className={`input is-medium ${
-                    errors.title ? "is-danger" : ""
-                  }`}
-                  type="text"
-                  placeholder="Ingresa el título de tu post"
-                />
-              </div>
-              {errors.title && (
-                <p className="help is-danger">{errors.title.message}</p>
-              )}
-            </div>
+            <div className="card mb-5">
+              <div className="card-content">
+                <div className="is-flex is-justify-content-space-between is-align-items-start">
+                  <div>
+                    <h2 className="title is-5 mb-1">Información principal</h2>
+                    <p className="is-size-7 has-text-grey">
+                      Define el título y el enfoque del post.
+                    </p>
+                  </div>
+                  <span className="tag is-light">
+                    <Info size={14} style={{ marginRight: 6 }} />
+                    Campo requerido
+                  </span>
+                </div>
 
-            {/* Content Editor */}
-            <div className="field">
-              <label className="label">Contenido</label>
-              <div className="control">
-                <TipTapEditor
-                  content={content}
-                  onChange={(newContent) => {
-                    setContent(newContent);
-                    setValue("content", newContent);
-                  }}
-                  placeholder="Comparte tus pensamientos, reflexiones o reseñas sobre libros..."
-                />
-              </div>
-              {errors.content && (
-                <p className="help is-danger">{errors.content.message}</p>
-              )}
-            </div>
-
-            {/* Images */}
-            <div className="field">
-              <label className="label">Imágenes (Opcional)</label>
-              <div className="control">
-                <div className="file is-boxed">
-                  <label className="file-label">
+                <div className="field mt-4">
+                  <label className="label">Título del post</label>
+                  <div className="control">
                     <input
-                      className="file-input"
-                      type="file"
-                      multiple
-                      accept="image/*"
-                      onChange={handleImageSelect}
+                      {...register("title")}
+                      className={`input is-medium ${
+                        errors.title ? "is-danger" : ""
+                      }`}
+                      type="text"
+                      placeholder="Ej. Voces invisibles: nuevas autoras de la selva amazónica"
                     />
-                    <span className="file-cta">
-                      <span className="file-icon">
-                        <Upload />
-                      </span>
-                      <span className="file-label">
-                        Seleccionar imágenes (máx. 5)
-                      </span>
+                  </div>
+                  <p className="help">
+                    Sé claro y directo. Este texto se mostrará en la tarjeta de publicación.
+                  </p>
+                  {errors.title && (
+                    <p className="help is-danger">{errors.title.message}</p>
+                  )}
+                </div>
+
+                <div className="field">
+                  <div className="is-flex is-align-items-center is-justify-content-space-between mb-2">
+                    <label className="label mb-0">Contenido</label>
+                    <span className="tag is-light is-info">
+                      {wordCount} {wordCount === 1 ? "palabra" : "palabras"}
                     </span>
-                  </label>
+                  </div>
+                  <div className={`control ${errors.content ? "is-danger" : ""}`}>
+                    <TipTapEditor
+                      content={content}
+                      onChange={(newContent) => {
+                        setContent(newContent);
+                        setValue("content", newContent);
+                      }}
+                      placeholder="Comparte tus pensamientos, reflexiones o reseñas sobre libros..."
+                    />
+                  </div>
+                  <p className="help">
+                    Incluye contexto, citas o fragmentos. El editor soporta formato enriquecido.
+                  </p>
+                  {errors.content && (
+                    <p className="help is-danger">{errors.content.message}</p>
+                  )}
                 </div>
               </div>
             </div>
 
-            {/* Image Previews */}
-            {imagePreviews.length > 0 && (
-              <div className="field">
-                <div className="columns is-multiline">
-                  {imagePreviews.map((preview, index) => (
-                    <div key={index} className="column is-3">
-                      <div className="card">
-                        <div className="card-image">
-                          <figure className="image is-square">
-                            <Image
-                              src={preview}
-                              alt={`Preview ${index + 1}`}
-                              className="is-rounded"
-                              fill
-                              style={{ objectFit: "cover" }}
-                            />
-                          </figure>
+            <div className="card mb-5">
+              <div className="card-content">
+                <div className="is-flex is-justify-content-space-between is-align-items-center">
+                  <div>
+                    <h2 className="title is-5 mb-1">Multimedia</h2>
+                    <p className="is-size-7 has-text-grey">
+                      Añade imágenes para ilustrar tu publicación (máx. 5 archivos).
+                    </p>
+                  </div>
+                  <span className="tag is-light">
+                    <Upload size={14} style={{ marginRight: 6 }} />
+                    {selectedImages.length}/5
+                  </span>
+                </div>
+
+                <label
+                  htmlFor="post-images"
+                  className={`is-flex is-flex-direction-column is-align-items-center is-justify-content-center has-text-centered mt-4 p-5 ${
+                    isDragActive
+                      ? "has-background-primary-light"
+                      : "has-background-light"
+                  }`}
+                  style={{
+                    border: `2px dashed ${
+                      isDragActive ? "#485fc7" : "#d7d8dd"
+                    }`,
+                    borderRadius: "18px",
+                    transition: "border-color 0.2s ease",
+                    cursor: "pointer",
+                  }}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                >
+                  <ImagePlus size={36} className="mb-2" />
+                  <span className="is-size-6 has-text-weight-semibold">
+                    Arrastra y suelta tus imágenes aquí
+                  </span>
+                  <span className="is-size-7 has-text-grey">
+                    o{" "}
+                    <span className="has-text-link">
+                      haz clic para seleccionarlas
+                    </span>
+                  </span>
+                  <input
+                    id="post-images"
+                    className="is-hidden"
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    onChange={handleImageSelect}
+                  />
+                </label>
+
+                <div className="mt-3">
+                  <progress
+                    className="progress is-info is-small"
+                    value={selectedImages.length}
+                    max={5}
+                  >
+                    {selectedImages.length}
+                  </progress>
+                  <p className="is-size-7 has-text-grey">
+                    Sugerencia: utiliza imágenes horizontales en alta resolución.
+                  </p>
+                </div>
+
+                {imagePreviews.length > 0 && (
+                  <div className="columns is-multiline is-variable is-2 mt-4">
+                    {imagePreviews.map((preview, index) => (
+                      <div
+                        key={index}
+                        className="column is-4-tablet is-6-mobile is-3-desktop"
+                      >
+                        <div
+                          className="card is-clickable"
+                          style={{ position: "relative" }}
+                        >
+                          <div className="card-image">
+                            <figure
+                              className="image is-square"
+                              style={{
+                                borderRadius: "16px",
+                                overflow: "hidden",
+                                position: "relative",
+                              }}
+                            >
+                              <Image
+                                src={preview}
+                                alt={`Preview ${index + 1}`}
+                                fill
+                                sizes="(max-width: 768px) 45vw, 140px"
+                                style={{ objectFit: "cover" }}
+                              />
+                            </figure>
+                          </div>
                           <button
                             type="button"
                             onClick={() => removeImage(index)}
-                            className="delete is-medium"
+                            className="button is-small is-white is-rounded"
                             style={{
                               position: "absolute",
-                              top: "0.5rem",
-                              right: "0.5rem",
+                              top: 12,
+                              right: 12,
                             }}
+                            aria-label={`Eliminar imagen ${index + 1}`}
                           >
-                            <X size={16} />
+                            <X size={14} />
                           </button>
+                          <div className="card-content py-2">
+                            <p className="is-size-7 has-text-centered has-text-grey">
+                              Imagen {index + 1}
+                            </p>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </div>
-            )}
+            </div>
 
-            {/* Submit Button */}
-            <div className="field is-grouped is-grouped-centered">
-              <div className="control">
-                <button
-                  type="submit"
-                  className={`button is-primary is-large ${
-                    isUploading || isAddingPost ? "is-loading" : ""
-                  }`}
-                  disabled={isUploading || isAddingPost}
-                >
-                  Publicar Post
-                </button>
+            <div className="card">
+              <div className="card-content">
+                <div className="level is-align-items-center">
+                  <div className="level-left">
+                    <p className="is-size-7 has-text-grey">
+                      Revisa la vista previa antes de publicar. Puedes editar en cualquier momento.
+                    </p>
+                  </div>
+                  <div className="level-right">
+                    <button
+                      type="submit"
+                      className={`button is-primary is-medium has-text-weight-semibold ${
+                        isUploading || isAddingPost ? "is-loading" : ""
+                      }`}
+                      disabled={isUploading || isAddingPost}
+                    >
+                      Publicar ahora
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </form>
         </div>
 
-        {/* Right Sidebar - Preferences */}
-        <div className="column is-4">
-          <div className="box">
-            <h3 className="title is-5 has-text-primary">⚙️ Preferencias</h3>
+        <div className="column is-4-desktop is-12-tablet">
+          <div style={{ position: "sticky", top: "2rem" }}>
+            <div className="card mb-4">
+              <div className="card-content">
+                <h3 className="title is-5 mb-2">Preferencias</h3>
+                <p className="is-size-7 has-text-grey mb-4">
+                  Controla quién puede ver esta publicación y vincúlala con un libro.
+                </p>
 
-            {/* Author ID (Hidden field for now) */}
-            <input {...register("authorId")} type="hidden" />
+                <input {...register("authorId")} type="hidden" />
 
-            {/* Visibility */}
-            <div className="field">
-              <label className="label">Visibilidad</label>
-              <div className="control">
-                <div className="select is-fullwidth">
-                  <select {...register("preference.visibleBy")}>
-                    <option value="general">Público General</option>
-                    <option value="generation">Mi Generación</option>
-                  </select>
+                <div className="field">
+                  <label className="label">Visibilidad</label>
+                  <div className="control">
+                    <div className="select is-fullwidth">
+                      <select {...register("preference.visibleBy")}>
+                        <option value="general">Público general</option>
+                        <option value="generation">Mi generación</option>
+                      </select>
+                    </div>
+                  </div>
+                  {errors.preference?.visibleBy && (
+                    <p className="help is-danger">
+                      {errors.preference.visibleBy.message}
+                    </p>
+                  )}
+                  <p className="help">
+                    {watchedVisibility === "general"
+                      ? "Visible para toda la comunidad"
+                      : "Solo usuarios de tu generación podrán acceder"}
+                  </p>
+                </div>
+
+                <div className="field">
+                  <label className="label">Libro asociado</label>
+                  <Controller
+                    control={control}
+                    name="preference.book"
+                    render={({ field }) => (
+                      <Select<BookOption, false>
+                        instanceId="associated-book-select"
+                        inputId="associated-book-select"
+                        options={bookOptions}
+                        classNamePrefix="react-select"
+                        placeholder="Selecciona un libro"
+                        isClearable
+                        isSearchable
+                        noOptionsMessage={() =>
+                          books.length
+                            ? "Sin coincidencias"
+                            : "No hay libros disponibles"
+                        }
+                        value={
+                          bookOptions.find(
+                            (option) => option.value === field.value
+                          ) ?? null
+                        }
+                        onChange={(option) =>
+                          field.onChange(option ? option.value : "")
+                        }
+                        onBlur={field.onBlur}
+                        styles={selectStyles}
+                      />
+                    )}
+                  />
+                  {errors.preference?.book && (
+                    <p className="help is-danger">
+                      {errors.preference.book.message}
+                    </p>
+                  )}
+                  <p className="help">
+                    Vincula la publicación con una lectura recomendada.
+                  </p>
                 </div>
               </div>
-              {errors.preference?.visibleBy && (
-                <p className="help is-danger">
-                  {errors.preference.visibleBy.message}
-                </p>
-              )}
-              <p className="help">
-                {watchedVisibility === "general"
-                  ? "Visible para todos los usuarios"
-                  : "Solo visible para usuarios de tu generación"}
-              </p>
             </div>
 
-            {/* Associated Book */}
-            <div className="field">
-              <label className="label">Libro Asociado</label>
-              <div className="control">
-                <div className="select is-fullwidth">
-                  <select {...register("preference.book")}>
-                    <option value="">Selecciona un libro</option>
-                    {books.map((book: Book) => (
-                      <option key={book.id} value={book.id}>
-                        {book.titulo} - {book.author}
-                      </option>
-                    ))}
-                  </select>
+            <div className="card">
+              <div className="card-content">
+                <h4 className="title is-6 mb-3">Vista previa rápida</h4>
+                <div className="notification is-light">
+                  <p className="is-size-7">
+                    <strong>Título:</strong> {watchedTitle || "Sin título"}
+                  </p>
+                  <p className="is-size-7">
+                    <strong>Extracto:</strong>{" "}
+                    {plainContent
+                      ? `${plainContent.slice(0, 120)}${
+                          plainContent.length > 120 ? "..." : ""
+                        }`
+                      : "Sin contenido"}
+                  </p>
+                  <p className="is-size-7">
+                    <strong>Imágenes:</strong> {selectedImages.length}
+                  </p>
+                  <p className="is-size-7">
+                    <strong>Visibilidad:</strong>{" "}
+                    {watchedVisibility === "general" ? "Público" : "Generación"}
+                  </p>
+                  <p className="is-size-7">
+                    <strong>Palabras:</strong> {wordCount}
+                  </p>
                 </div>
-              </div>
-              {errors.preference?.book && (
-                <p className="help is-danger">
-                  {errors.preference.book.message}
+                <progress
+                  className="progress is-primary is-small"
+                  value={completion}
+                  max={100}
+                >
+                  {completion}%
+                </progress>
+                <p className="is-size-7 has-text-grey">
+                  Tu progreso como borrador.
                 </p>
-              )}
-              <p className="help">
-                Asocia tu post con un libro de la biblioteca
-              </p>
-            </div>
-
-            {/* Post Statistics Preview */}
-            <div className="content">
-              <hr />
-              <h4 className="title is-6">📊 Vista Previa</h4>
-              <div className="notification is-light">
-                <p>
-                  <strong>Título:</strong> {watch("title") || "Sin título"}
-                </p>
-                <p>
-                  <strong>Contenido:</strong>{" "}
-                  {content.replace(/<[^>]*>/g, "").slice(0, 100) ||
-                    "Sin contenido"}
-                  ...
-                </p>
-                <p>
-                  <strong>Imágenes:</strong> {selectedImages.length}
-                </p>
-                <p>
-                  <strong>Visibilidad:</strong>{" "}
-                  {watchedVisibility === "general" ? "Público" : "Generación"}
-                </p>
+                <div className="notification is-info is-light mt-3 is-flex is-align-items-center">
+                  <Info size={14} style={{ marginRight: 8 }} />
+                  <span className="is-size-7">
+                    Recuerda agregar enlaces o menciones relevantes dentro del contenido.
+                  </span>
+                </div>
               </div>
             </div>
           </div>

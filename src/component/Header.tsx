@@ -59,7 +59,7 @@ const Header = () => {
             onClick={() => router.push("/users")}
             className="navbar-item is-clickable has-text-white is-underlined has-text-weight-bold"
           >
-            Eventos
+            Usuarios
           </li>
           <li
             onClick={() => router.push("/book")}

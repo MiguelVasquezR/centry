@@ -1,5 +1,4 @@
 import BookForm from "@/src/views/book/add/BookForm";
-import { ProtectedRoute } from "@/src/components/ProtectedRoute";
 
 interface EditBookPageProps {
   params: {
@@ -8,11 +7,7 @@ interface EditBookPageProps {
 }
 
 const EditBookPage = ({ params }: EditBookPageProps) => {
-  return (
-    <ProtectedRoute>
-      <BookForm bookId={params.id} mode="edit" />
-    </ProtectedRoute>
-  );
+  return <BookForm bookId={params.id} mode="edit" />;
 };
 
 export default EditBookPage;
