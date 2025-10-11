@@ -5,7 +5,7 @@ import { DateTime } from "luxon";
 import Link from "next/link";
 import { useFetchPostsQuery } from "@/src/redux/store/api/postsApi";
 import { getGreating } from "@/src/utils/utils";
-import CardPost from "../../component/CardPost";
+import CardPost from "../../../component/CardPost";
 import type { PostListItem } from "@/src/types/postList";
 
 const Updates = () => {
@@ -38,9 +38,6 @@ const Updates = () => {
         </div>
 
         <div className="is-flex is-align-items-center is-gap-2">
-          <Link href="/posts" className="button is-light">
-            Ver publicaciones
-          </Link>
           <Link
             className="button is-primary has-text-white has-text-weight-semibold"
             href="/posts/create"

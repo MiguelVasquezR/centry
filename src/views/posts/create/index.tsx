@@ -19,7 +19,7 @@ import { Book } from "../../../types/book";
 import TipTapEditor from "../../../component/TipTapEditor";
 import Select, { StylesConfig } from "react-select";
 import { useCreatePostMutation } from "../../../redux/store/api/postsApi";
-import { useLazyFetchBooksQuery } from "../../../redux/store/api/booksApi";
+import { useGetBooksQuery } from "../../../redux/store/api/booksApi";
 
 // Zod schema for post validation
 const postSchema = z.object({
@@ -44,13 +44,16 @@ const CreatePostView = () => {
   const [isDragActive, setIsDragActive] = useState(false);
 
   const [createPost, { isLoading: isAddingPost }] = useCreatePostMutation();
-  const [fetchBooks, { data: booksResponse }] = useLazyFetchBooksQuery();
-  const books = booksResponse?.books || [];
-
-  // Load books when component mounts
-  useEffect(() => {
-    fetchBooks({ page: 1, limit: 100 });
-  }, [fetchBooks]);
+  const { data: dataBooks, isLoading: isLoadingBooks } = useGetBooksQuery({});
+  const books = dataBooks?.data || [];
+  const bookOptions = useMemo<BookOption[]>(
+    () =>
+      books.map((book: Book) => ({
+        value: book.id,
+        label: `${book.titulo} — ${book.author ?? book.autor}`,
+      })),
+    [books]
+  );
 
   const {
     register,
@@ -119,14 +122,6 @@ const CreatePostView = () => {
       alert("Se alcanzó el límite de 5 imágenes. Algunas no se agregaron.");
     }
   };
-  const bookOptions = useMemo<BookOption[]>(
-    () =>
-      books.map((book: Book) => ({
-        value: book.id,
-        label: `${book.titulo} — ${book.author}`,
-      })),
-    [books]
-  );
 
   const selectStyles: StylesConfig<BookOption, false> = {
     control: (provided, state) => ({
@@ -160,8 +155,8 @@ const CreatePostView = () => {
       backgroundColor: state.isFocused
         ? "rgba(59, 91, 253, 0.08)"
         : state.isSelected
-          ? "#3b5bfd"
-          : "transparent",
+        ? "#3b5bfd"
+        : "transparent",
       color: state.isSelected ? "#fff" : "#1f2937",
       cursor: "pointer",
     }),
@@ -285,6 +280,10 @@ const CreatePostView = () => {
     }
   };
 
+  if (isLoadingBooks) {
+    return <div>Cargando</div>;
+  }
+
   return (
     <div className="container">
       <br />
@@ -319,20 +318,6 @@ const CreatePostView = () => {
                     </span>
                   </div>
                 </div>
-              </div>
-            </div>
-            <div className="level-right is-hidden-mobile">
-              <div className="level-item" style={{ minWidth: "220px" }}>
-                <progress
-                  className="progress is-primary is-small"
-                  value={completion}
-                  max={100}
-                >
-                  {completion}%
-                </progress>
-                <p className="is-size-7 has-text-grey has-text-right mt-1">
-                  Completa los campos para publicar
-                </p>
               </div>
             </div>
           </div>
@@ -382,7 +367,8 @@ const CreatePostView = () => {
                     />
                   </div>
                   <p className="help">
-                    Sé claro y directo. Este texto se mostrará en la tarjeta de publicación.
+                    Sé claro y directo. Este texto se mostrará en la tarjeta de
+                    publicación.
                   </p>
                   {errors.title && (
                     <p className="help is-danger">{errors.title.message}</p>
@@ -396,7 +382,9 @@ const CreatePostView = () => {
                       {wordCount} {wordCount === 1 ? "palabra" : "palabras"}
                     </span>
                   </div>
-                  <div className={`control ${errors.content ? "is-danger" : ""}`}>
+                  <div
+                    className={`control ${errors.content ? "is-danger" : ""}`}
+                  >
                     <TipTapEditor
                       content={content}
                       onChange={(newContent) => {
@@ -407,7 +395,8 @@ const CreatePostView = () => {
                     />
                   </div>
                   <p className="help">
-                    Incluye contexto, citas o fragmentos. El editor soporta formato enriquecido.
+                    Incluye contexto, citas o fragmentos. El editor soporta
+                    formato enriquecido.
                   </p>
                   {errors.content && (
                     <p className="help is-danger">{errors.content.message}</p>
@@ -422,7 +411,8 @@ const CreatePostView = () => {
                   <div>
                     <h2 className="title is-5 mb-1">Multimedia</h2>
                     <p className="is-size-7 has-text-grey">
-                      Añade imágenes para ilustrar tu publicación (máx. 5 archivos).
+                      Añade imágenes para ilustrar tu publicación (máx. 5
+                      archivos).
                     </p>
                   </div>
                   <span className="tag is-light">
@@ -479,7 +469,8 @@ const CreatePostView = () => {
                     {selectedImages.length}
                   </progress>
                   <p className="is-size-7 has-text-grey">
-                    Sugerencia: utiliza imágenes horizontales en alta resolución.
+                    Sugerencia: utiliza imágenes horizontales en alta
+                    resolución.
                   </p>
                 </div>
 
@@ -543,13 +534,14 @@ const CreatePostView = () => {
                 <div className="level is-align-items-center">
                   <div className="level-left">
                     <p className="is-size-7 has-text-grey">
-                      Revisa la vista previa antes de publicar. Puedes editar en cualquier momento.
+                      Revisa la vista previa antes de publicar. Puedes editar en
+                      cualquier momento.
                     </p>
                   </div>
                   <div className="level-right">
                     <button
                       type="submit"
-                      className={`button is-primary is-medium has-text-weight-semibold ${
+                      className={`button is-primary has-text-white is-medium has-text-weight-semibold ${
                         isUploading || isAddingPost ? "is-loading" : ""
                       }`}
                       disabled={isUploading || isAddingPost}
@@ -569,7 +561,8 @@ const CreatePostView = () => {
               <div className="card-content">
                 <h3 className="title is-5 mb-2">Preferencias</h3>
                 <p className="is-size-7 has-text-grey mb-4">
-                  Controla quién puede ver esta publicación y vincúlala con un libro.
+                  Controla quién puede ver esta publicación y vincúlala con un
+                  libro.
                 </p>
 
                 <input {...register("authorId")} type="hidden" />
@@ -679,7 +672,8 @@ const CreatePostView = () => {
                 <div className="notification is-info is-light mt-3 is-flex is-align-items-center">
                   <Info size={14} style={{ marginRight: 8 }} />
                   <span className="is-size-7">
-                    Recuerda agregar enlaces o menciones relevantes dentro del contenido.
+                    Recuerda agregar enlaces o menciones relevantes dentro del
+                    contenido.
                   </span>
                 </div>
               </div>

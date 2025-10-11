@@ -1,4 +1,4 @@
-import Updates from "@/src/views/updates/Updates";
+import Updates from "@/src/views/posts/updates/Updates";
 
 const Index = () => {
   return <Updates />;

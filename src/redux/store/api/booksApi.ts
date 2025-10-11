@@ -7,17 +7,8 @@ interface BookApiResponse {
 
 export const booksApi = apiSlice.injectEndpoints({
   endpoints: (build) => ({
-    fetchBooks: build.query<
-      {
-        books: Book[];
-        status: number;
-        currentPage: number;
-        totalPages: number;
-        totalElements: number;
-      },
-      { page?: number; limit?: number }
-    >({
-      query: ({ page = 1, limit = 10 } = {}) => ({
+    fetchBooks: build.query({
+      query: ({ page, limit }) => ({
         url: `/book/getAll?page=${page}&limit=${limit}`,
         method: "GET",
       }),
@@ -58,6 +49,12 @@ export const booksApi = apiSlice.injectEndpoints({
       }),
       invalidatesTags: (result, error, id) => [{ type: "books", id }, "books"],
     }),
+    getBooks: build.query({
+      query: () => ({
+        url: "/book/get",
+        method: "GET",
+      }),
+    }),
   }),
 });
 
@@ -67,4 +64,5 @@ export const {
   useCreateBookMutation,
   useUpdateBookMutation,
   useDeleteBookMutation,
+  useGetBooksQuery,
 } = booksApi;
