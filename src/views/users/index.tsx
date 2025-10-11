@@ -1,13 +1,29 @@
+"use client";
+
+import { useGetUserFilerQuery } from "@/src/redux/store/api/usersApi";
+import { User } from "@/src/types/user";
 import { EllipsisVertical } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
 const Users = () => {
-  const CardUser = () => {
+  const { data: users, isLoading: isLoadingUsers } =
+    useGetUserFilerQuery(undefined);
+
+  const CardUser = ({ user }: { user: User }) => {
     return (
-      <div className="column">
+      <div className="column is-2">
         <div className="card has-shadow is-relative">
-          <div style={{ position: "absolute", right: 4, top: 4, zIndex: 1 }}>
+          <div
+            className="has-background-white is-flex is-clickable"
+            style={{
+              position: "absolute",
+              right: 6,
+              top: 6,
+              zIndex: 1,
+              borderRadius: 4,
+            }}
+          >
             <EllipsisVertical />
           </div>
           <div className="card-image">
@@ -16,7 +32,7 @@ const Users = () => {
               style={{ borderRadius: "12px", overflow: "hidden" }}
             >
               <Image
-                src="https://res.cloudinary.com/dvt4vznxn/image/upload/v1736465366/cld-sample.jpg"
+                src={user.imageUrl}
                 alt="Foto de usuario"
                 fill
                 style={{ objectFit: "cover" }}
@@ -26,13 +42,17 @@ const Users = () => {
             </figure>
           </div>
           <div className="card-content has-text-centered">
-            <p className="title is-5 has-text-dark">Miguel Vásquez</p>
-            <p className="subtitle is-6 has-text-grey">S19025267</p>
+            <p className="title is-5 has-text-dark">{user.name}</p>
+            <p className="subtitle is-6 has-text-grey">{user.tuition}</p>
           </div>
         </div>
       </div>
     );
   };
+
+  if (isLoadingUsers) {
+    return <div>Cargando</div>;
+  }
 
   return (
     <div className="container">
@@ -63,16 +83,20 @@ const Users = () => {
           </div>
         </div>
 
-        <div className="columns">
-          <CardUser />
-          <CardUser />
-          <CardUser />
-          <CardUser />
-          <CardUser />
-          <CardUser />
-          <CardUser />
-          <CardUser />
-        </div>
+        {Object.entries(users || [])
+          .sort(([a], [b]) => Number(b.slice(1)) - Number(a.slice(1)))
+          .map(([gen, users]) => (
+            <div key={gen}>
+              <h3 className="is-size-4 has-text-weight-bold">{gen}</h3>
+              <br />
+              <div className="columns">
+                {users.map((u) => (
+                  <CardUser key={u.id} user={u} />
+                ))}
+              </div>
+              <br />
+            </div>
+          ))}
       </div>
     </div>
   );

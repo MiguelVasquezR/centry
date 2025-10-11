@@ -1,6 +1,7 @@
 import { DateTime } from "luxon";
 import type { FirestoreTimestamp } from "@/src/types/postList";
 
+
 export const getGreating = () => {
   const date = DateTime.now();
   const houre = date.hour;
@@ -82,3 +83,30 @@ export const getReadingTime = (content: string) => {
   const words = getPlainText(content).split(/\s+/).filter(Boolean).length;
   return Math.max(1, Math.round(words / 200));
 };
+
+export const fileToBase64 = (file: File) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = (error) => reject(error);
+  });
+};
+
+export const uploadFileToCloudinary = async (file: File): Promise<string> => {
+  const formData = new FormData();
+  formData.append("file", file); // el archivo directamente
+  formData.append("upload_preset", "newSystem"); // preset unsigned configurado en tu Cloudinary
+  // opcional: formData.append("folder", "avatars");
+
+  const res = await fetch("https://api.cloudinary.com/v1_1/dvt4vznxn/image/upload", {
+    method: "POST",
+    body: formData, // 👈 sin headers JSON
+  });
+
+  const data = await res.json();
+
+  if (!res.ok) throw new Error(data.error?.message || "Error al subir imagen");
+  return data.secure_url;
+};
+

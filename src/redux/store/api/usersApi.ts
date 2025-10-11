@@ -16,7 +16,22 @@ export const usersApi = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ["users"],
     }),
+    getUserFiler: build.query({
+      query: () => ({
+        url: "/user/get",
+        method: "GET",
+      }),
+      transformResponse: (response) => {
+        const grouped: Record<string, User[]> = {};
+        response.data.forEach((u: User) => {
+          const gen = u.tuition.slice(0, 3);
+          if (!grouped[gen]) grouped[gen] = [];
+          grouped[gen].push(u);
+        });
+        return grouped;
+      },
+    }),
   }),
 });
 
-export const { useCreateUserMutation } = usersApi;
+export const { useCreateUserMutation, useGetUserFilerQuery } = usersApi;

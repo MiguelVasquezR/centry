@@ -1,46 +1,37 @@
 "use client";
 
-import { useMemo, useState, type ChangeEvent, type DragEvent } from "react";
+import { useMemo, useState, type ChangeEvent } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+
 import { useRouter } from "next/navigation";
-import {
-  ChevronLeft,
-  ImagePlus,
-  Info,
-  ListChecks,
-  Sparkles,
-  UserCircle2,
-} from "lucide-react";
+import { ChevronLeft, ImagePlus, Info, UserCircle2 } from "lucide-react";
 import Image from "next/image";
 import toast from "react-hot-toast";
 
 import { useCreateUserMutation } from "@/src/redux/store/api/usersApi";
 import type { User } from "@/src/types/user";
-
-const userSchema = z.object({
-  name: z.string().min(1, "El nombre es requerido"),
-  email: z.string().email("Ingresa un correo electrónico válido"),
-  topics: z.string().min(1, "Ingresa al menos un tema de interés"),
-  biography: z.string().min(1, "La biografía es requerida"),
-  tuition: z.string().min(1, "La matrícula es requerida"),
-});
+import { userSchema } from "@/src/schemas/user";
+import z from "zod";
+import { uploadFileToCloudinary } from "@/src/utils/utils";
 
 type UserFormData = z.infer<typeof userSchema>;
 
 const AddUserView = () => {
   const router = useRouter();
-  const [createUser, { isLoading }] = useCreateUserMutation();
+
   const [selectedAvatar, setSelectedAvatar] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string>("");
   const [isUploadingAvatar, setIsUploadingAvatar] = useState<boolean>(false);
   const [isDragActive, setIsDragActive] = useState<boolean>(false);
 
+  const [createUser, { isLoading }] = useCreateUserMutation();
+
   const {
     register,
     handleSubmit,
     reset,
+    setValue,
     watch,
     formState: { errors, isSubmitting },
   } = useForm<UserFormData>({
@@ -51,6 +42,8 @@ const AddUserView = () => {
       topics: "",
       biography: "",
       tuition: "",
+      imageUrl:
+        "https://res.cloudinary.com/dvt4vznxn/image/upload/v1758764097/138617_ar3v0q.jpg",
     },
   });
 
@@ -94,70 +87,19 @@ const AddUserView = () => {
 
   const isSaving = isSubmitting || isLoading || isUploadingAvatar;
 
-  const setAvatarFromFile = (file: File) => {
-    setSelectedAvatar(file);
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setAvatarPreview(reader.result as string);
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const handleAvatarSelect = (event: ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarSelect = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      setAvatarFromFile(file);
+      const url = await uploadFileToCloudinary(file);
+      if (url) {
+        setValue("imageUrl", url);
+        setAvatarPreview(url);
+      }
     }
     event.target.value = "";
   };
 
-  const handleDragOver = (event: DragEvent<HTMLLabelElement>) => {
-    event.preventDefault();
-    event.stopPropagation();
-    setIsDragActive(true);
-  };
-
-  const handleDragLeave = () => {
-    setIsDragActive(false);
-  };
-
-  const handleAvatarDrop = (event: DragEvent<HTMLLabelElement>) => {
-    event.preventDefault();
-    event.stopPropagation();
-    setIsDragActive(false);
-    const file = event.dataTransfer.files?.[0];
-    if (file) {
-      setAvatarFromFile(file);
-    }
-  };
-
-  const uploadAvatar = async (file: File): Promise<string> => {
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("upload_preset", "dvt4vznxn");
-
-    const response = await fetch(
-      "https://api.cloudinary.com/v1_1/dvt4vznxn/image/upload",
-      {
-        method: "POST",
-        body: formData,
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error("Error uploading avatar");
-    }
-
-    const data = await response.json();
-    return data.secure_url;
-  };
-
   const onSubmit = async (data: UserFormData) => {
-    if (!selectedAvatar) {
-      toast.error("Por favor, sube una imagen de perfil.");
-      return;
-    }
-
     setIsUploadingAvatar(true);
 
     try {
@@ -166,15 +108,14 @@ const AddUserView = () => {
         .map((topic) => topic.trim())
         .filter((topic) => topic.length > 0);
 
-      const imageUrl = await uploadAvatar(selectedAvatar);
-
       const payload: Omit<User, "id"> = {
         name: data.name,
         email: data.email,
         topics: topicsArray,
         biography: data.biography,
         tuition: data.tuition,
-        imageUrl,
+        imageUrl: data.imageUrl,
+        isActive: true,
       };
 
       await createUser(payload).unwrap();
@@ -215,31 +156,7 @@ const AddUserView = () => {
                   <p className="subtitle is-6 has-text-grey">
                     Captura información clave para sumar a la comunidad lectora.
                   </p>
-                  <div className="tags">
-                    <span className="tag is-info is-light">
-                      <Sparkles size={14} style={{ marginRight: 6 }} />
-                      Curaduría humana
-                    </span>
-                    <span className="tag is-light">
-                      <ListChecks size={14} style={{ marginRight: 6 }} />
-                      {completion}% completado
-                    </span>
-                  </div>
                 </div>
-              </div>
-            </div>
-            <div className="level-right is-hidden-mobile">
-              <div className="level-item" style={{ minWidth: "220px" }}>
-                <progress
-                  className="progress is-primary is-small"
-                  value={completion}
-                  max={100}
-                >
-                  {completion}%
-                </progress>
-                <p className="is-size-7 has-text-grey has-text-right mt-1">
-                  Completa los campos para habilitar el registro
-                </p>
               </div>
             </div>
           </div>
@@ -317,7 +234,8 @@ const AddUserView = () => {
               <div className="card-content">
                 <h3 className="title is-5 mb-2">Biografía y enfoque</h3>
                 <p className="is-size-7 has-text-grey">
-                  Destaca los intereses literarios para personalizar recomendaciones.
+                  Destaca los intereses literarios para personalizar
+                  recomendaciones.
                 </p>
 
                 <div className="field mt-4">
@@ -331,7 +249,8 @@ const AddUserView = () => {
                     />
                   </div>
                   <p className="help">
-                    Escribe los temas separados por coma. Se convertirán en etiquetas.
+                    Escribe los temas separados por coma. Se convertirán en
+                    etiquetas.
                   </p>
                   {errors.topics && (
                     <p className="help is-danger">{errors.topics.message}</p>
@@ -426,28 +345,30 @@ const AddUserView = () => {
                 <div className="card-content">
                   <h3 className="title is-5 mb-1">Avatar</h3>
                   <p className="is-size-7 has-text-grey">
-                    Usa un retrato cuadrado o 3:4 para que encaje con los perfiles destacados.
+                    Usa un retrato cuadrado o 3:4 para que encaje con los
+                    perfiles destacados.
                   </p>
                   <label
                     className={`is-flex is-flex-direction-column is-align-items-center is-justify-content-center has-text-centered mt-4 p-5 ${
-                      isDragActive ? "has-background-primary-light" : "has-background-light"
+                      isDragActive
+                        ? "has-background-primary-light"
+                        : "has-background-light"
                     }`}
                     style={{
-                      border: `2px dashed ${isDragActive ? "#485fc7" : "#d7d8dd"}`,
+                      border: `2px dashed ${
+                        isDragActive ? "#485fc7" : "#d7d8dd"
+                      }`,
                       borderRadius: "18px",
                       cursor: "pointer",
                       transition: "border-color 0.2s ease",
                     }}
-                    onDragOver={handleDragOver}
+                    /* onDragOver={handleDragOver}
                     onDragLeave={handleDragLeave}
-                    onDrop={handleAvatarDrop}
+                    onDrop={handleAvatarDrop} */
                   >
                     <ImagePlus size={36} className="mb-2" />
                     <span className="is-size-6 has-text-weight-semibold">
-                      Arrastra una imagen de perfil
-                    </span>
-                    <span className="is-size-7 has-text-grey">
-                      o <span className="has-text-link">haz clic para seleccionarla</span>
+                      Haz clic para seleccionarla
                     </span>
                     <span className="is-size-7 has-text-grey mt-2">
                       {selectedAvatar?.name || "Formatos aceptados: JPG · PNG"}
@@ -513,7 +434,8 @@ const AddUserView = () => {
                       <strong>Matrícula:</strong> {watchedTuition || "—"}
                     </p>
                     <p className="is-size-7">
-                      <strong>Imagen:</strong> {hasAvatar ? "Lista" : "Pendiente"}
+                      <strong>Imagen:</strong>{" "}
+                      {hasAvatar ? "Lista" : "Pendiente"}
                     </p>
                   </div>
                   <progress
@@ -529,7 +451,8 @@ const AddUserView = () => {
                   <div className="notification is-info is-light mt-3 is-flex is-align-items-center">
                     <Info size={14} style={{ marginRight: 8 }} />
                     <span className="is-size-7">
-                      Verifica la ortografía de nombres y correos antes de guardar.
+                      Verifica la ortografía de nombres y correos antes de
+                      guardar.
                     </span>
                   </div>
                 </div>
