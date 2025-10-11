@@ -16,6 +16,14 @@ export const usersApi = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ["users"],
     }),
+    updateUser: build.mutation({
+      query: (user) => ({
+        url: `/user/update/${user.id}`,
+        method: "PUT",
+        body: user,
+      }),
+      invalidatesTags: ["users"],
+    }),
     getUserFiler: build.query({
       query: () => ({
         url: "/user/get",
@@ -30,8 +38,25 @@ export const usersApi = apiSlice.injectEndpoints({
         });
         return grouped;
       },
+      providesTags: ["users"],
+    }),
+    getUserById: build.query({
+      query: (id) => ({
+        url: `/user/${id}`,
+        method: "GET",
+      }),
+      transformResponse: (data: User) => {
+        return {
+          user: data,
+        };
+      },
     }),
   }),
 });
 
-export const { useCreateUserMutation, useGetUserFilerQuery } = usersApi;
+export const {
+  useCreateUserMutation,
+  useGetUserFilerQuery,
+  useLazyGetUserByIdQuery,
+  useUpdateUserMutation,
+} = usersApi;

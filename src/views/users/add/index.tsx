@@ -1,15 +1,19 @@
 "use client";
 
-import { useMemo, useState, type ChangeEvent } from "react";
+import { useEffect, useMemo, useState, type ChangeEvent } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { ChevronLeft, ImagePlus, Info, UserCircle2 } from "lucide-react";
 import Image from "next/image";
 import toast from "react-hot-toast";
 
-import { useCreateUserMutation } from "@/src/redux/store/api/usersApi";
+import {
+  useCreateUserMutation,
+  useLazyGetUserByIdQuery,
+  useUpdateUserMutation,
+} from "@/src/redux/store/api/usersApi";
 import type { User } from "@/src/types/user";
 import { userSchema } from "@/src/schemas/user";
 import z from "zod";
@@ -19,6 +23,9 @@ type UserFormData = z.infer<typeof userSchema>;
 
 const AddUserView = () => {
   const router = useRouter();
+  const params = useParams();
+  const { id } = params;
+  const isEditing = id || null;
 
   const [selectedAvatar, setSelectedAvatar] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string>("");
@@ -26,6 +33,9 @@ const AddUserView = () => {
   const [isDragActive, setIsDragActive] = useState<boolean>(false);
 
   const [createUser, { isLoading }] = useCreateUserMutation();
+  const [updateUser] = useUpdateUserMutation();
+  const [getUser, { isLoading: isLoadingUserId, data: userIdData }] =
+    useLazyGetUserByIdQuery();
 
   const {
     register,
@@ -46,6 +56,25 @@ const AddUserView = () => {
         "https://res.cloudinary.com/dvt4vznxn/image/upload/v1758764097/138617_ar3v0q.jpg",
     },
   });
+
+  useEffect(() => {
+    if (isEditing) {
+      getUser(id);
+    }
+  }, [isEditing]);
+
+  useEffect(() => {
+    const user = userIdData?.user;
+    if (user) {
+      setValue("biography", user.biography);
+      setValue("email", user.email);
+      setValue("imageUrl", user.imageUrl);
+      setValue("name", user.name);
+      setValue("topics", user.topics.join(","));
+      setValue("tuition", user.tuition);
+      setAvatarPreview(user.imageUrl);
+    }
+  }, [userIdData]);
 
   const watchedName = watch("name");
   const watchedEmail = watch("email");
@@ -118,8 +147,14 @@ const AddUserView = () => {
         isActive: true,
       };
 
-      await createUser(payload).unwrap();
-      toast.success("Usuario creado correctamente");
+      if (isEditing) {
+        await updateUser({ id: userIdData?.user.id, ...payload });
+        toast.success("Usuario actualizado correctamente");
+      } else {
+        await createUser(payload).unwrap();
+        toast.success("Usuario creado correctamente");
+      }
+
       reset();
       setSelectedAvatar(null);
       setAvatarPreview("");
@@ -132,6 +167,10 @@ const AddUserView = () => {
       setIsUploadingAvatar(false);
     }
   };
+
+  if (isLoadingUserId) {
+    return <div>Cargando</div>;
+  }
 
   return (
     <div className="container">
@@ -327,12 +366,12 @@ const AddUserView = () => {
                   </button>
                   <button
                     type="submit"
-                    className={`button is-primary is-medium has-text-weight-semibold ${
+                    className={`button is-primary is-medium has-text-white has-text-weight-semibold ${
                       isSaving ? "is-loading" : ""
                     }`}
                     disabled={isSaving}
                   >
-                    Guardar usuario
+                    {isEditing ? "Actualiar usuario" : "Guardar usuario"}
                   </button>
                 </div>
               </div>

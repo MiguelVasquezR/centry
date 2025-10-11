@@ -2,30 +2,53 @@
 
 import { useGetUserFilerQuery } from "@/src/redux/store/api/usersApi";
 import { User } from "@/src/types/user";
+import clsx from "clsx";
 import { EllipsisVertical } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useState } from "react";
 
 const Users = () => {
   const { data: users, isLoading: isLoadingUsers } =
     useGetUserFilerQuery(undefined);
 
   const CardUser = ({ user }: { user: User }) => {
+    const [isActiveMenu, setIsActiveMenu] = useState<boolean>(false);
+
     return (
       <div className="column is-2">
         <div className="card has-shadow is-relative">
           <div
-            className="has-background-white is-flex is-clickable"
+            onClick={() => {
+              setIsActiveMenu(!isActiveMenu);
+            }}
+            className={clsx("dropdown", { "is-active": isActiveMenu })}
             style={{
               position: "absolute",
               right: 6,
               top: 6,
               zIndex: 1,
-              borderRadius: 4,
             }}
           >
-            <EllipsisVertical />
+            <div
+              className="dropdown-trigger has-background-white is-flex is-clickable"
+              style={{ borderRadius: 4 }}
+            >
+              <EllipsisVertical />
+            </div>
+            <div className="dropdown-menu" id="dropdown-menu" role="menu">
+              <div className="dropdown-content">
+                <Link href={`/users/edit/${user.id}`} className="dropdown-item">
+                  Editar
+                </Link>
+                <hr className="dropdown-divider" />
+                <button className="dropdown-item has-text-danger">
+                  Eliminar
+                </button>
+              </div>
+            </div>
           </div>
+
           <div className="card-image">
             <figure
               className="image is-4by3"
