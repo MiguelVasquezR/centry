@@ -5,7 +5,7 @@ import { DateTime } from "luxon";
 import Link from "next/link";
 import { useFetchPostsQuery } from "@/src/redux/store/api/postsApi";
 import { getGreating } from "@/src/utils/utils";
-import CardPost from "./components/CardPost";
+import CardPost from "../../component/CardPost";
 import type { PostListItem } from "@/src/types/postList";
 
 const Updates = () => {

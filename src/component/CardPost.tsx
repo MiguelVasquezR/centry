@@ -3,12 +3,8 @@
 import { Bookmark, Eye, Heart, MessageCircle, Sparkles } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import {
-  formatPostDate,
-  getExcerpt,
-  getReadingTime,
-} from "../utils";
-import { fallbackCover } from "@/src/views/updates/constants";
+import { formatPostDate, getExcerpt, getReadingTime } from "@/src/utils/utils";
+import { fallbackCover } from "../constants";
 import type { PostListItem } from "@/src/types/postList";
 
 const CardPost = ({ post }: { post: PostListItem }) => {
@@ -70,7 +66,9 @@ const CardPost = ({ post }: { post: PostListItem }) => {
             <span className="tag is-light is-info is-rounded">
               <Sparkles size={14} style={{ marginRight: 6 }} />
               {readingMinutes}{" "}
-              {readingMinutes === 1 ? "minuto de lectura" : "minutos de lectura"}
+              {readingMinutes === 1
+                ? "minuto de lectura"
+                : "minutos de lectura"}
             </span>
             {relatedBookUrl && (
               <Link href={relatedBookUrl} className="tag is-light">

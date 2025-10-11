@@ -1,7 +1,7 @@
 "use client";
 import CardBook from "@/src/component/CardBook";
 import Pagination from "@/src/component/Pagination";
-import { useAuth } from "@/src/contexts/AuthContext";
+import { useAuth } from "@/src/firebase/contexts/AuthContext";
 import { useLazyFetchBooksQuery } from "@/src/redux/store/api/booksApi";
 import Link from "next/link";
 import { useEffect, useState } from "react";

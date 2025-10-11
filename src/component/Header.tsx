@@ -4,7 +4,7 @@ import { LogIn, LogOut, User } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/src/contexts/AuthContext";
+import { useAuth } from "@/src/firebase/contexts/AuthContext";
 import { signOutUser } from "@/src/firebase/auth";
 import toast from "react-hot-toast";
 import clsx from "clsx";
