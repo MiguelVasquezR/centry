@@ -12,6 +12,7 @@ import toast from "react-hot-toast";
 import {
   useCreateUserMutation,
   useLazyGetUserByIdQuery,
+  useRemoveUserMutation,
   useUpdateUserMutation,
 } from "@/src/redux/store/api/usersApi";
 import type { User } from "@/src/types/user";

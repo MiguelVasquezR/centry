@@ -1,6 +1,9 @@
 "use client";
 
-import { useGetUserFilerQuery } from "@/src/redux/store/api/usersApi";
+import {
+  useGetUserFilerQuery,
+  useRemoveUserMutation,
+} from "@/src/redux/store/api/usersApi";
 import { User } from "@/src/types/user";
 import clsx from "clsx";
 import { EllipsisVertical } from "lucide-react";
@@ -14,6 +17,11 @@ const Users = () => {
 
   const CardUser = ({ user }: { user: User }) => {
     const [isActiveMenu, setIsActiveMenu] = useState<boolean>(false);
+    const [deleteUser] = useRemoveUserMutation();
+
+    const removeUser = async (id: string) => {
+      await deleteUser(id);
+    };
 
     return (
       <div className="column is-2">
@@ -42,7 +50,13 @@ const Users = () => {
                   Editar
                 </Link>
                 <hr className="dropdown-divider" />
-                <button className="dropdown-item has-text-danger">
+                <button
+                  type="button"
+                  onClick={() => {
+                    removeUser(user.id);
+                  }}
+                  className="dropdown-item has-text-danger"
+                >
                   Eliminar
                 </button>
               </div>

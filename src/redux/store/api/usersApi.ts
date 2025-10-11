@@ -51,6 +51,13 @@ export const usersApi = apiSlice.injectEndpoints({
         };
       },
     }),
+    removeUser: build.mutation({
+      query: (id) => ({
+        url: `/user/remove?id=${id}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["users"],
+    }),
   }),
 });
 
@@ -59,4 +66,5 @@ export const {
   useGetUserFilerQuery,
   useLazyGetUserByIdQuery,
   useUpdateUserMutation,
+  useRemoveUserMutation,
 } = usersApi;
