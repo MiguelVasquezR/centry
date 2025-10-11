@@ -39,7 +39,7 @@ export const getDataPagination = async (
     const totalCount = countSnapshot.size;
 
     // Construir query base
-    let q = query(colRef, orderBy("titulo"), limit(limitCount));
+    let q = query(colRef, orderBy("createdAt"), limit(limitCount));
 
     // Si no es la primera página, buscamos el último doc de la página anterior
     if (page > 1) {

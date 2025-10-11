@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { TextStyle } from "@tiptap/extension-text-style";
@@ -114,6 +114,10 @@ const TipTapEditor = ({
     ],
     content,
     immediatelyRender: false,
+    autofocus: false,
+    onCreate: ({ editor }) => {
+      editor.commands.blur();
+    },
     onUpdate: ({ editor }) => {
       onChange(editor.getHTML());
     },
@@ -125,6 +129,12 @@ const TipTapEditor = ({
       },
     },
   });
+
+  useEffect(() => {
+    if (editor && editor.isFocused) {
+      editor.commands.blur();
+    }
+  }, [editor]);
 
   if (!editor) {
     return null;
