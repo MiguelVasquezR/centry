@@ -46,6 +46,9 @@ const Users = () => {
             </div>
             <div className="dropdown-menu" id="dropdown-menu" role="menu">
               <div className="dropdown-content">
+                <Link href={`/users/${user.id}`} className="dropdown-item">
+                  Ver Perfil
+                </Link>
                 <Link href={`/users/edit/${user.id}`} className="dropdown-item">
                   Editar
                 </Link>

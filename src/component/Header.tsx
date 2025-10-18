@@ -8,12 +8,17 @@ import { useAuth } from "@/src/firebase/contexts/AuthContext";
 import { signOutUser } from "@/src/firebase/auth";
 import toast from "react-hot-toast";
 import clsx from "clsx";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { deleteCookie } from "cookies-next";
+import { getCookie, setCookie } from "cookies-next/client";
+import { useGetUserByEmailQuery } from "../redux/store/api/usersApi";
 
 const Header = () => {
   const router = useRouter();
   const { user, isAuthenticated } = useAuth();
   const [userMenuActive, setUserMenuActive] = useState<boolean>(false);
+
+  const userId = localStorage.getItem("userId") || ""
 
   const handleLogout = async () => {
     try {
@@ -21,6 +26,7 @@ const Header = () => {
       if (error) {
         toast.error("Error al cerrar sesión");
       } else {
+        deleteCookie("userEmail", { path: "/" });
         toast.success("Sesión cerrada exitosamente");
         router.push("/login");
       }
@@ -103,10 +109,10 @@ const Header = () => {
                     <Link className="dropdown-item" href={"#"}>
                       Administración
                     </Link>
-                    <Link className="dropdown-item" href={"#"}>
+                    <Link className="dropdown-item" href={"/events"}>
                       Calendario
                     </Link>
-                    <Link className="dropdown-item" href={"#"}>
+                    <Link className="dropdown-item" href={`users/${userId}`}>
                       Mi perfil
                     </Link>
                     <hr className="dropdown-divider" />
@@ -143,6 +149,49 @@ const Header = () => {
 };
 
 const HeaderRender = ({ children }: { children: React.ReactNode }) => {
+  const [hasMounted, setHasMounted] = useState(false);
+  const [userId, setUserId] = useState("");
+  const cookie = getCookie("userEmail");
+
+  useEffect(() => {
+    setHasMounted(true);
+
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const storedUserId = window.localStorage.getItem("userId") ?? "";
+    setUserId(storedUserId);
+  }, []);
+
+  const shouldSkipQuery = !hasMounted || !cookie || Boolean(userId);
+  const { data: currentUser, isLoading: isLoading } = useGetUserByEmailQuery(
+    cookie ?? "",
+    {
+      skip: shouldSkipQuery,
+    }
+  );
+
+  useEffect(() => {
+    if (!hasMounted || typeof window === "undefined") {
+      return;
+    }
+
+    if (currentUser?.id && currentUser.id !== userId) {
+      window.localStorage.setItem("userId", currentUser.id);
+      setUserId(currentUser.id);
+      setCookie("userEmail", "")
+    }
+  }, [currentUser, hasMounted, userId]);
+
+  if (!hasMounted) {
+    return <div>Cargando</div>;
+  }
+
+  if (isLoading) {
+    return <div>Cargando</div>;
+  }
+
   return (
     <>
       <Header />

@@ -1,64 +1,239 @@
+"use client";
+
 import Image from "next/image";
+import Link from "next/link";
+import { useRouter, useParams } from "next/navigation";
+import { useEffect } from "react";
+import {
+  Mail,
+  BookOpen,
+  Calendar,
+  ArrowLeft,
+  CheckCircle2,
+  XCircle,
+} from "lucide-react";
+import { useLazyGetUserByIdQuery } from "@/src/redux/store/api/usersApi";
+import type { User } from "@/src/types/user";
+
+const fallbackAvatar =
+  "https://res.cloudinary.com/dvt4vznxn/image/upload/v1758764097/138617_ar3v0q.jpg";
 
 const UserProfile = () => {
+  const router = useRouter();
+  const params = useParams();
+  const userId = typeof params?.id === "string" ? params.id : "";
+
+  const [fetchUser, { data, isLoading, isFetching, isError }] =
+    useLazyGetUserByIdQuery();
+
+  useEffect(() => {
+    if (userId) {
+      fetchUser(userId);
+    }
+  }, [userId, fetchUser]);
+
+  if (!userId) {
+    return (
+      <div className="container">
+        <br />
+        <div className="notification is-danger">
+          No se proporcionó un identificador de usuario.
+        </div>
+      </div>
+    );
+  }
+
+  const user = (data as { user?: User })?.user;
+  const isBusy = isLoading || isFetching;
+
+  if (isBusy && !user) {
+    return (
+      <div className="container">
+        <br />
+        <div className="card p-5">
+          <p className="title is-5 has-text-grey">Cargando perfil…</p>
+          <p className="subtitle is-6 has-text-grey">
+            Estamos preparando la información de la persona.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="container">
+        <br />
+        <div className="notification is-danger">
+          Ocurrió un error al cargar el perfil. Intenta nuevamente más tarde.
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="container">
+        <br />
+        <div className="notification is-warning">
+          No encontramos información para este usuario.
+        </div>
+        <button className="button is-light mt-3" onClick={() => router.back()}>
+          Volver
+        </button>
+      </div>
+    );
+  }
+
+  const { name, imageUrl, email, biography, tuition, topics, isActive } = user;
+
   return (
     <div className="container">
       <br />
-      <div className="columns">
-        <div className="column">
-          <div className="is-flex is-flex-direction-row is-justify-content-start is-align-content-center is-gap-5">
-            <div>
-              <figure className="image is-128x128 is-rounded">
+      <div className="is-flex is-justify-content-space-between is-align-items-center mb-4">
+        <button
+          className="button is-light is-small"
+          onClick={() => router.back()}
+          type="button"
+        >
+          <ArrowLeft size={16} className="mr-2" />
+          Volver
+        </button>
+        <Link href="/users" className="button is-text is-small">
+          Ver directorio
+        </Link>
+      </div>
+
+      <div
+        className="card mb-5"
+        style={{
+          border: "none",
+          background:
+            "linear-gradient(135deg, rgba(63,86,173,0.12) 0%, rgba(118,75,162,0.18) 100%)",
+        }}
+      >
+        <div className="card-content">
+          <div className="columns is-vcentered">
+            <div className="column is-narrow">
+              <figure
+                className="image is-128x128"
+                style={{
+                  borderRadius: "28px",
+                  overflow: "hidden",
+                  border: "4px solid rgba(255,255,255,0.85)",
+                }}
+              >
                 <Image
-                  src={
-                    "https://res.cloudinary.com/dvt4vznxn/image/upload/v1736465366/samples/woman-on-a-football-field.jpg"
-                  }
-                  alt=""
-                  className="image is-128x128 is-rounded"
+                  src={imageUrl || fallbackAvatar}
+                  alt={name}
                   width={128}
                   height={128}
+                  style={{ objectFit: "cover" }}
                 />
               </figure>
             </div>
+            <div className="column">
+              <div className="is-flex is-align-items-center is-gap-3 is-flex-wrap-wrap mb-2">
+                <h1 className="title is-3 mb-0 has-text-dark">{name}</h1>
+                <span
+                  className={`tag is-medium ${
+                    isActive ? "is-success is-light" : "is-danger is-light"
+                  }`}
+                >
+                  {isActive ? (
+                    <>
+                      <CheckCircle2 size={16} className="mr-1" />
+                      Activo
+                    </>
+                  ) : (
+                    <>
+                      <XCircle size={16} className="mr-1" />
+                      Inactivo
+                    </>
+                  )}
+                </span>
+              </div>
+              <p className="subtitle is-6 has-text-grey mb-1">
+                Matrícula · <strong>{tuition}</strong>
+              </p>
+              <p className="subtitle is-6 has-text-grey-dark">
+                <Mail size={16} className="mr-2" />
+                {email}
+              </p>
+              <div className="is-flex is-align-items-center is-gap-2 mt-3">
+                <Link
+                  href={`/users/edit/${user.id}`}
+                  className="button is-primary is-light"
+                >
+                  Editar perfil
+                </Link>
+                <Link href="/events" className="button is-link is-light">
+                  <Calendar size={16} className="mr-2" />
+                  Ver próximos eventos
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-            <div className="is-flex is-flex-direction-column is-flex-direction-row is-justify-content-center is-align-content-center is-gap-1">
-              <p className="is-size-4 has-text-weight-bold">Miguel Vásquez</p>
-              <p className="is-size-6 has-text-weight-semibold">S21016338</p>
+      <div className="columns is-variable is-5">
+        <div className="column is-8">
+          <div className="card mb-4">
+            <div className="card-content">
+              <p className="title is-5 mb-3">Biografía</p>
+              <p className="is-size-6 has-text-grey-dark">
+                {biography ||
+                  "El usuario todavía no ha agregado una biografía."}
+              </p>
+            </div>
+          </div>
+
+          <div className="card">
+            <div className="card-content">
+              <p className="title is-5 mb-3">Temas de interés</p>
+              {topics && topics.length > 0 ? (
+                <div className="tags are-medium">
+                  {topics.map((topic) => (
+                    <span key={topic} className="tag is-info is-light">
+                      <BookOpen size={14} className="mr-2" />
+                      {topic}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <p className="is-size-6 has-text-grey">
+                  Aún no se han registrado temas favoritos.
+                </p>
+              )}
             </div>
           </div>
         </div>
 
-        <div className="is-flex is-flex-direction-column is-flex-direction-row is-justify-content-end is-align-content-center ">
-          <button className="button is-primary has-text-white">
-            Editar Perfil
-          </button>
-        </div>
-      </div>
-
-      <hr />
-
-      <div className="columns">
-        <div className="column">
-          <p className="is-size-6 has-text-weight-bold">Sobre mi</p>
-          <p>
-            Lorem ipsum dolor sit amet consectetur, adipisicing elit. Ipsam
-            illum dolorem maxime facere qui mollitia soluta quis ratione dolorum
-            dicta eum, saepe ab porro accusamus architecto? Necessitatibus
-            distinctio ducimus ab! Lorem ipsum dolor sit amet consectetur
-            adipisicing elit. Necessitatibus consequuntur, animi vitae
-            perferendis error perspiciatis tempora suscipit fuga possimus et,
-            praesentium doloribus nam molestiae accusamus, laudantium ducimus
-            quasi quidem? Maiores?
-          </p>
-        </div>
-        <div className="column is-3">
-          <p className="is-size-6 has-text-weight-bold">Datos extras</p>
-          <p>
-            Lorem ipsum dolor sit amet, consectetur adipisicing elit. Quam
-            laborum a fuga dolores cum! Alias dicta ratione repudiandae
-            voluptatibus quod? Magnam neque et eos deserunt aliquid veniam illum
-            quo mollitia.
-          </p>
+        <div className="column is-4">
+          <div className="card">
+            <div className="card-content">
+              <p className="title is-5 mb-3">Datos de contacto</p>
+              <div className="mb-3">
+                <p className="is-size-7 has-text-grey">Correo electrónico</p>
+                <p className="is-size-6 has-text-weight-semibold">{email}</p>
+              </div>
+              <div className="mb-3">
+                <p className="is-size-7 has-text-grey">Matrícula</p>
+                <p className="is-size-6 has-text-weight-semibold">{tuition}</p>
+              </div>
+              <div>
+                <p className="is-size-7 has-text-grey">Estado</p>
+                <p
+                  className={`is-size-6 has-text-weight-semibold ${
+                    isActive ? "has-text-success" : "has-text-danger"
+                  }`}
+                >
+                  {isActive ? "Disponible para colaborar" : "Cuenta inactiva"}
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

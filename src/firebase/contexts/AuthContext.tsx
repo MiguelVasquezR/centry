@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { User } from "firebase/auth";
 import { onAuthStateChange } from "@/src/firebase/auth";
+import { deleteCookie, setCookie } from "cookies-next";
 
 interface AuthContextType {
   user: User | null;
@@ -36,6 +37,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const unsubscribe = onAuthStateChange((user) => {
       setUser(user);
       setLoading(false);
+
+      if (user?.email) {
+        setCookie("userEmail", user.email, {
+          path: "/",
+          maxAge: 60 * 60 * 24, // 1 day
+        });
+      } else {
+        deleteCookie("userEmail", { path: "/" });
+      }
     });
 
     return () => unsubscribe();

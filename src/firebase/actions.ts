@@ -10,6 +10,7 @@ import {
   orderBy,
   limit,
   startAfter,
+  where,
 } from "firebase/firestore";
 import { firestore } from "./app";
 import { FieldValues } from "react-hook-form";
@@ -101,7 +102,6 @@ export const updateData = async (
 
 export const getDataById = async (collectionName: string, id: string) => {
   try {
-    console.log(id);
     const docRef = doc(firestore, collectionName, id);
     const docSnap = await getDoc(docRef);
 
@@ -113,6 +113,25 @@ export const getDataById = async (collectionName: string, id: string) => {
     }
   } catch (error) {
     console.error("Error al obtener el documento por ID:", error);
+  }
+};
+
+export const getDataByEmail = async (collectionName: string, email: string) => {
+  try {
+    const colRef = collection(firestore, collectionName);
+    const q = query(colRef, where("email", "==", email), limit(1));
+    const snapshot = await getDocs(q);
+
+    if (snapshot.empty) {
+      console.error("No se encontró usuario con ese email");
+      return null;
+    }
+
+    const docSnap = snapshot.docs[0];
+    return { id: docSnap.id, ...docSnap.data() };
+  } catch (error) {
+    console.error("Error al obtener el documento por email:", error);
+    return null;
   }
 };
 

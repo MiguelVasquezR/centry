@@ -58,6 +58,11 @@ export const usersApi = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ["users"],
     }),
+    getUserByEmail: build.query({
+      query: (email) => ({
+        url: `/user/email/${email}`,
+      }),
+    }),
   }),
 });
 
@@ -67,4 +72,5 @@ export const {
   useLazyGetUserByIdQuery,
   useUpdateUserMutation,
   useRemoveUserMutation,
+  useGetUserByEmailQuery,
 } = usersApi;
