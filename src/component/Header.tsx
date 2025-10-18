@@ -18,7 +18,7 @@ const Header = () => {
   const { user, isAuthenticated } = useAuth();
   const [userMenuActive, setUserMenuActive] = useState<boolean>(false);
 
-  const userId = localStorage.getItem("userId") || ""
+  const userId = localStorage.getItem("userId") || "";
 
   const handleLogout = async () => {
     try {
@@ -106,7 +106,7 @@ const Header = () => {
                 </div>
                 <div className="dropdown-menu" id="dropdown-menu" role="menu">
                   <div className="dropdown-content">
-                    <Link className="dropdown-item" href={"#"}>
+                    <Link className="dropdown-item" href={"/admin"}>
                       Administración
                     </Link>
                     <Link className="dropdown-item" href={"/events"}>
@@ -180,7 +180,7 @@ const HeaderRender = ({ children }: { children: React.ReactNode }) => {
     if (currentUser?.id && currentUser.id !== userId) {
       window.localStorage.setItem("userId", currentUser.id);
       setUserId(currentUser.id);
-      setCookie("userEmail", "")
+      setCookie("userEmail", "");
     }
   }, [currentUser, hasMounted, userId]);
 

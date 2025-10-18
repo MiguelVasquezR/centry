@@ -1,5 +1,7 @@
+import Events from "@/src/views/events/Events";
+
 const EventsPage = () => {
-  return <div>Hola</div>;
+  return <Events />;
 };
 
 export default EventsPage;
