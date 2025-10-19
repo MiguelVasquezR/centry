@@ -30,9 +30,7 @@ const GeneralModal: React.FC<GeneralModalProps> = ({
   confirmDisabled = false,
   size = "default",
 }) => {
-  const handleBackgroundClick = (
-    event: React.MouseEvent<HTMLDivElement>
-  ) => {
+  const handleBackgroundClick = (event: React.MouseEvent<HTMLDivElement>) => {
     event.stopPropagation();
     onClose();
   };
@@ -62,7 +60,7 @@ const GeneralModal: React.FC<GeneralModalProps> = ({
           {children}
         </section>
         {showFooter && (
-          <footer className="modal-card-foot is-justify-content-flex-end">
+          <footer className="modal-card-foot is-justify-content-flex-end is-gap-2">
             <button className="button" onClick={onClose}>
               {cancelLabel}
             </button>

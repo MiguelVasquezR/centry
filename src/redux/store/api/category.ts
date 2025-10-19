@@ -61,4 +61,5 @@ export const {
   useUpdateCategoryMutation,
   useLazyGetCategoryByIdQuery,
   useGetCategoriesQuery,
+  useDeleteCategoryMutation,
 } = categoryApi;

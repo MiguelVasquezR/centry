@@ -7,9 +7,15 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import GeneralModal from "./GeneralModal";
+import { useDeleteCategoryMutation } from "../redux/store/api/category";
+import toast from "react-hot-toast";
 
 const CardCategory = ({ category }: { category: Category }) => {
   const [isActive, setIsActive] = useState<boolean>(false);
+  const [isOpenModal, setIsOpenModal] = useState<boolean>(false);
+
+  const [deleteCategory] = useDeleteCategoryMutation();
 
   return (
     <div className="card p-2">
@@ -45,7 +51,13 @@ const CardCategory = ({ category }: { category: Category }) => {
                   Editar
                 </Link>
                 <hr className="dropdown-divider" />
-                <button type="button" className="dropdown-item has-text-danger">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsOpenModal(true);
+                  }}
+                  className="dropdown-item has-text-danger"
+                >
                   Eliminar
                 </button>
               </div>
@@ -53,6 +65,27 @@ const CardCategory = ({ category }: { category: Category }) => {
           </div>
         </div>
       </div>
+
+      <GeneralModal
+        isOpen={isOpenModal}
+        onClose={() => {
+          setIsOpenModal(false);
+        }}
+        onConfirm={() => {
+          deleteCategory(category.id || "");
+          toast.success(
+            `Se ha eliminado la categorías ${category.title} correctamente!`
+          );
+        }}
+        title="¿Desea eliminar esta categoría?"
+      >
+        <div>
+          <p>
+            Esta acción será permanente por lo cual ya no podrás volver a
+            seleccionarla
+          </p>
+        </div>
+      </GeneralModal>
     </div>
   );
 };
