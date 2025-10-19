@@ -11,7 +11,10 @@ import clsx from "clsx";
 import { useEffect, useState } from "react";
 import { deleteCookie } from "cookies-next";
 import { getCookie, setCookie } from "cookies-next/client";
-import { useGetUserByEmailQuery } from "../redux/store/api/usersApi";
+import {
+  useGetCurrentUserQuery,
+  useGetUserByEmailQuery,
+} from "../redux/store/api/usersApi";
 
 const Header = () => {
   const router = useRouter();
@@ -19,6 +22,9 @@ const Header = () => {
   const [userMenuActive, setUserMenuActive] = useState<boolean>(false);
 
   const userId = localStorage.getItem("userId") || "";
+
+  const { data: currentUser, isLoading } = useGetCurrentUserQuery(undefined);
+  const { rol = "student" } = currentUser || {};
 
   const handleLogout = async () => {
     try {
@@ -106,7 +112,12 @@ const Header = () => {
                 </div>
                 <div className="dropdown-menu" id="dropdown-menu" role="menu">
                   <div className="dropdown-content">
-                    <Link className="dropdown-item" href={"/admin"}>
+                    <Link
+                      className={clsx("dropdown-item", {
+                        "is-hidden": rol !== "admin",
+                      })}
+                      href={"/admin"}
+                    >
                       Administración
                     </Link>
                     <Link className="dropdown-item" href={"/events"}>

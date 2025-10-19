@@ -12,8 +12,12 @@ import {
   CheckCircle2,
   XCircle,
 } from "lucide-react";
-import { useLazyGetUserByIdQuery } from "@/src/redux/store/api/usersApi";
+import {
+  useGetCurrentUserQuery,
+  useLazyGetUserByIdQuery,
+} from "@/src/redux/store/api/usersApi";
 import type { User } from "@/src/types/user";
+import clsx from "clsx";
 
 const fallbackAvatar =
   "https://res.cloudinary.com/dvt4vznxn/image/upload/v1758764097/138617_ar3v0q.jpg";
@@ -25,6 +29,12 @@ const UserProfile = () => {
 
   const [fetchUser, { data, isLoading, isFetching, isError }] =
     useLazyGetUserByIdQuery();
+
+  const { data: currentUser, isLoading: isLoadingCurrentUser } =
+    useGetCurrentUserQuery(undefined);
+  const { rol = "student", id: currentUserId } = currentUser || {};
+
+  const canEdit = rol === "admin" || currentUserId === userId;
 
   useEffect(() => {
     if (userId) {
@@ -86,6 +96,10 @@ const UserProfile = () => {
   }
 
   const { name, imageUrl, email, biography, tuition, topics, isActive } = user;
+
+  if (isLoadingCurrentUser) {
+    return <div>Cargando</div>;
+  }
 
   return (
     <div className="container">
@@ -163,7 +177,9 @@ const UserProfile = () => {
               <div className="is-flex is-align-items-center is-gap-2 mt-3">
                 <Link
                   href={`/users/edit/${user.id}`}
-                  className="button is-primary is-light"
+                  className={clsx("button is-primary is-light", {
+                    "is-hidden": !canEdit,
+                  })}
                 >
                   Editar perfil
                 </Link>

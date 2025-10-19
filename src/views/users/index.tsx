@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  useGetCurrentUserQuery,
   useGetUserFilerQuery,
   useRemoveUserMutation,
 } from "@/src/redux/store/api/usersApi";
@@ -15,9 +16,15 @@ const Users = () => {
   const { data: users, isLoading: isLoadingUsers } =
     useGetUserFilerQuery(undefined);
 
+  const { data: currentUser, isLoading: isLoadingCurrentUser } =
+    useGetCurrentUserQuery(undefined);
+  const { rol = "student", id: userId } = currentUser || {};
+
   const CardUser = ({ user }: { user: User }) => {
     const [isActiveMenu, setIsActiveMenu] = useState<boolean>(false);
     const [deleteUser] = useRemoveUserMutation();
+
+    const hasMoreOpt = rol === "admin" || userId === user.id;
 
     const removeUser = async (id: string) => {
       await deleteUser(id);
@@ -49,19 +56,29 @@ const Users = () => {
                 <Link href={`/users/${user.id}`} className="dropdown-item">
                   Ver Perfil
                 </Link>
-                <Link href={`/users/edit/${user.id}`} className="dropdown-item">
-                  Editar
-                </Link>
-                <hr className="dropdown-divider" />
-                <button
-                  type="button"
-                  onClick={() => {
-                    removeUser(user.id);
-                  }}
-                  className="dropdown-item has-text-danger"
-                >
-                  Eliminar
-                </button>
+                {hasMoreOpt && (
+                  <Link
+                    href={`/users/edit/${user.id}`}
+                    className="dropdown-item"
+                  >
+                    Editar
+                  </Link>
+                )}
+
+                {hasMoreOpt && (
+                  <>
+                    <hr className="dropdown-divider" />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        removeUser(user.id);
+                      }}
+                      className="dropdown-item has-text-danger"
+                    >
+                      Eliminar
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -90,7 +107,7 @@ const Users = () => {
     );
   };
 
-  if (isLoadingUsers) {
+  if (isLoadingUsers || isLoadingCurrentUser) {
     return <div>Cargando</div>;
   }
 
@@ -103,11 +120,16 @@ const Users = () => {
           <p className="is-size-4 has-text-weight-bold">Usuarios</p>
         </div>
 
-        <div className="">
-          <Link href="/users/add" className="button is-primary has-text-white">
-            Agregar
-          </Link>
-        </div>
+        {rol === "admin" && (
+          <div className="">
+            <Link
+              href="/users/add"
+              className="button is-primary has-text-white"
+            >
+              Agregar
+            </Link>
+          </div>
+        )}
       </div>
 
       <br />

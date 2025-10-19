@@ -7,4 +7,5 @@ export interface User {
   tuition: string;
   imageUrl: string;
   isActive: boolean;
+  rol: string;
 }

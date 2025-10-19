@@ -6,6 +6,7 @@ export interface Book {
   descripcion: string;
   editorial: string;
   image: string;
+  imagen?: string;
   numPag: string;
   tipo: string;
   titulo: string;

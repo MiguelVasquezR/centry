@@ -3,6 +3,8 @@ import CardBook from "@/src/component/CardBook";
 import Pagination from "@/src/component/Pagination";
 import { useAuth } from "@/src/firebase/contexts/AuthContext";
 import { useLazyFetchBooksQuery } from "@/src/redux/store/api/booksApi";
+import { useGetCurrentUserQuery } from "@/src/redux/store/api/usersApi";
+import { Book } from "@/src/types/book";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
@@ -11,9 +13,11 @@ const BookLibraryView = () => {
   const [page, setPage] = useState<number>(1);
   const [limit, setLimit] = useState<number>(20);
 
-  const { user } = useAuth();
+  const { data: currentUser, isLoading: isLoadingCurrentUser } =
+    useGetCurrentUserQuery(undefined);
+  const { rol = "student" } = currentUser || {};
 
-  console.log(user);
+  const { user } = useAuth();
 
   const [getMore, { data: dataBooks, isLoading: booksIsLoading, error }] =
     useLazyFetchBooksQuery();
@@ -39,7 +43,7 @@ const BookLibraryView = () => {
     getMore({ page: newPage, limit });
   };
 
-  if (booksIsLoading) {
+  if (booksIsLoading || isLoadingCurrentUser) {
     return <div className="loading">Loading</div>;
   }
 
@@ -48,11 +52,16 @@ const BookLibraryView = () => {
       <br />
       <div className="is-flex is-justify-content-space-between is-align-items-center">
         <p className="is-size-4">Biblioteca</p>
-        <div>
-          <Link href={"/book/add"} className="button is-primary has-text-white">
-            Agregar Libro
-          </Link>
-        </div>
+        {rol === "admin" && (
+          <div>
+            <Link
+              href={"/book/add"}
+              className="button is-primary has-text-white"
+            >
+              Agregar Libro
+            </Link>
+          </div>
+        )}
       </div>
 
       <br />
@@ -106,7 +115,8 @@ const BookLibraryView = () => {
 
       <div className="fixed-grid has-4-cols">
         <div className="grid ">
-          {books && books.map((book) => <CardBook key={book.id} book={book} />)}
+          {books &&
+            books.map((book: Book) => <CardBook key={book.id} book={book} />)}
         </div>
       </div>
 

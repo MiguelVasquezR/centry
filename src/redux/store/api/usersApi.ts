@@ -63,6 +63,15 @@ export const usersApi = apiSlice.injectEndpoints({
         url: `/user/email/${email}`,
       }),
     }),
+    getCurrentUser: build.query({
+      query: () => {
+        const userId = localStorage.getItem("userId") || "";
+        return {
+          url: `/user/${userId}`,
+          method: "GET",
+        };
+      },
+    }),
   }),
 });
 
@@ -73,4 +82,5 @@ export const {
   useUpdateUserMutation,
   useRemoveUserMutation,
   useGetUserByEmailQuery,
+  useGetCurrentUserQuery,
 } = usersApi;

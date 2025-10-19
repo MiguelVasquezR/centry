@@ -8,11 +8,16 @@ import clsx from "clsx";
 import { useDeleteBookMutation } from "@/src/redux/store/api/booksApi";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
+import { useGetCurrentUserQuery } from "../redux/store/api/usersApi";
 
 const CardBook = ({ book }: { book: Book }) => {
   const [isActiveMenu, setIsActiveMenu] = useState<boolean>(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<boolean>(false);
   const [deleteBook, { isLoading: isDeleting }] = useDeleteBookMutation();
+
+  const { data: currentUser, isLoading: isLoadingCurrentUser } =
+    useGetCurrentUserQuery(undefined);
+  const { rol = "student" } = currentUser || {};
 
   const router = useRouter();
 
@@ -37,7 +42,13 @@ const CardBook = ({ book }: { book: Book }) => {
       }}
     >
       <div style={{ position: "absolute", right: 12, top: 12 }}>
-        <div className={clsx("dropdown ", { "is-active": isActiveMenu })}>
+        <div
+          className={clsx(
+            "dropdown ",
+            { "is-active": isActiveMenu },
+            { "is-hidden": rol !== "admin" }
+          )}
+        >
           <div className="dropdown-trigger">
             <EllipsisVertical
               className="is-clickable"
@@ -70,7 +81,12 @@ const CardBook = ({ book }: { book: Book }) => {
       </div>
 
       <div className="is-flex is-justify-content-center">
-        <Image src={book.imagen} width={130} height={130} alt="Image from " />
+        <Image
+          src={book.imagen || book.image}
+          width={130}
+          height={130}
+          alt="Image from "
+        />
       </div>
       <br />
       <div>
