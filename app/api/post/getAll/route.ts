@@ -4,8 +4,14 @@ import { getDataPagination } from "@/src/firebase/actions";
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get("page") || "1");
-    const limit = parseInt(searchParams.get("limit") || "10");
+    const pageParam = parseInt(searchParams.get("page") ?? "1", 10);
+    const limitParam = parseInt(searchParams.get("limit") ?? "12", 10);
+
+    const page = Number.isFinite(pageParam) && pageParam > 0 ? pageParam : 1;
+    const limit =
+      Number.isFinite(limitParam) && limitParam > 0 ? limitParam : 12;
+
+    console.log({ page, limit });
 
     const result = await getDataPagination("posts", page, limit);
 

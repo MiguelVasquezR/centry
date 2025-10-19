@@ -1,9 +1,18 @@
 import { NextResponse } from "next/server";
 import { writeData } from "@/src/firebase/actions";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { auth } from "@/src/firebase/app";
+import { randomUUID } from "crypto";
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
+
+   /*  await createUserWithEmailAndPassword(
+      auth,
+      body.email,
+      randomUUID.toString()
+    ); */
 
     const code = await writeData("users", body);
 

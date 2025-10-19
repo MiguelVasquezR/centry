@@ -12,7 +12,6 @@ import toast from "react-hot-toast";
 import {
   useCreateUserMutation,
   useLazyGetUserByIdQuery,
-  useRemoveUserMutation,
   useUpdateUserMutation,
 } from "@/src/redux/store/api/usersApi";
 import type { User } from "@/src/types/user";
@@ -176,7 +175,7 @@ const AddUserView = () => {
   return (
     <div className="container">
       <br />
-      <div className="card mb-5">
+      <div className="mb-5">
         <div className="card-content">
           <div className="level is-align-items-center is-mobile">
             <div className="level-left">
@@ -187,30 +186,9 @@ const AddUserView = () => {
                   type="button"
                 >
                   <ChevronLeft className="mr-2" />
-                  Volver
                 </button>
               </div>
-              <div className="level-item">
-                <div>
-                  <h1 className="title is-4 mb-1">Registrar nuevo perfil</h1>
-                  <p className="subtitle is-6 has-text-grey">
-                    Captura información clave para sumar a la comunidad lectora.
-                  </p>
-                </div>
-              </div>
             </div>
-          </div>
-          <div className="is-hidden-tablet mt-3">
-            <progress
-              className="progress is-primary is-small"
-              value={completion}
-              max={100}
-            >
-              {completion}%
-            </progress>
-            <p className="is-size-7 has-text-grey mt-1">
-              Completa los campos para habilitar el registro
-            </p>
           </div>
         </div>
       </div>
@@ -501,6 +479,7 @@ const AddUserView = () => {
           </div>
         </div>
       </form>
+      <br />
     </div>
   );
 };
