@@ -4,8 +4,12 @@ import { NextResponse } from "next/server";
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get("page") || "0");
-    const limit = parseInt(searchParams.get("limit") || "0");
+    const pageParam = parseInt(searchParams.get("page") ?? "1", 10);
+    const limitParam = parseInt(searchParams.get("limit") ?? "12", 10);
+
+    const page = Number.isFinite(pageParam) && pageParam > 0 ? pageParam : 1;
+    const limit =
+      Number.isFinite(limitParam) && limitParam > 0 ? limitParam : 12;
 
     const data = await getDataPagination("libros", page, limit);
 

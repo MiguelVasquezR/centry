@@ -35,32 +35,49 @@ export const getDataPagination = async (
   try {
     const colRef = collection(firestore, collectionName);
 
+    const pageSize = Number.isFinite(limitCount) && limitCount > 0 ? limitCount : 10;
+    const currentPage = Number.isFinite(page) && page > 0 ? page : 1;
+    const orderField = "titulo";
+
     // Total de documentos
     const countSnapshot = await getDocs(colRef);
     const totalCount = countSnapshot.size;
+    const totalPages = Math.max(Math.ceil(totalCount / pageSize), 1);
 
-    // Construir query base
-    let q = query(colRef, orderBy("createdAt"), limit(limitCount));
+    // Construir query base con límite
+    let baseQuery = query(colRef, orderBy(orderField), limit(pageSize));
 
     // Si no es la primera página, buscamos el último doc de la página anterior
-    if (page > 1) {
+    if (currentPage > 1) {
+      const offset = (currentPage - 1) * pageSize;
       const prevQuery = query(
         colRef,
-        orderBy("titulo"),
-        limit((page - 1) * limitCount)
+        orderBy(orderField),
+        limit(offset)
       );
       const prevSnapshot = await getDocs(prevQuery);
       const lastVisible = prevSnapshot.docs[prevSnapshot.docs.length - 1];
-      q = query(
-        colRef,
-        orderBy("titulo"),
-        startAfter(lastVisible),
-        limit(limitCount)
-      );
+
+      if (lastVisible) {
+        baseQuery = query(
+          colRef,
+          orderBy(orderField),
+          startAfter(lastVisible),
+          limit(pageSize)
+        );
+      } else {
+        return {
+          data: [],
+          totalCount,
+          currentPage,
+          totalPages,
+          status: 200,
+        };
+      }
     }
 
     // Ejecutar query paginada
-    const querySnapshot = await getDocs(q);
+    const querySnapshot = await getDocs(baseQuery);
     const data = querySnapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
@@ -69,8 +86,8 @@ export const getDataPagination = async (
     return {
       data,
       totalCount,
-      currentPage: page,
-      totalPages: Math.ceil(totalCount / limitCount),
+      currentPage,
+      totalPages,
       status: 200,
     };
   } catch (err) {
