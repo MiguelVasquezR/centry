@@ -3,7 +3,7 @@ import { getData } from "@/src/firebase/actions";
 
 export async function GET(request: NextRequest) {
   try {
-    const result = await getData("category");
+    const result = await getData("categories");
 
     return NextResponse.json({
       category: result,

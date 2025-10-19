@@ -42,7 +42,7 @@ export const categoryApi = apiSlice.injectEndpoints({
     }),
     getCategories: build.query({
       query: () => ({
-        url: "/category/get",
+        url: "/category/getAll",
         method: "GET",
       }),
     }),

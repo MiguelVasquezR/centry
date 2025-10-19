@@ -12,7 +12,7 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const result = await updateData("category", id, data);
+    const result = await updateData("categories", id, data);
 
     if (result === 200) {
       return NextResponse.json({

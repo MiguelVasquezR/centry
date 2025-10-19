@@ -35,9 +35,10 @@ export const getDataPagination = async (
   try {
     const colRef = collection(firestore, collectionName);
 
-    const pageSize = Number.isFinite(limitCount) && limitCount > 0 ? limitCount : 10;
+    const pageSize =
+      Number.isFinite(limitCount) && limitCount > 0 ? limitCount : 10;
     const currentPage = Number.isFinite(page) && page > 0 ? page : 1;
-    const orderField = "titulo";
+    const orderField = collectionName === "libros" ? "titulo" : "title";
 
     // Total de documentos
     const countSnapshot = await getDocs(colRef);
@@ -50,11 +51,7 @@ export const getDataPagination = async (
     // Si no es la primera página, buscamos el último doc de la página anterior
     if (currentPage > 1) {
       const offset = (currentPage - 1) * pageSize;
-      const prevQuery = query(
-        colRef,
-        orderBy(orderField),
-        limit(offset)
-      );
+      const prevQuery = query(colRef, orderBy(orderField), limit(offset));
       const prevSnapshot = await getDocs(prevQuery);
       const lastVisible = prevSnapshot.docs[prevSnapshot.docs.length - 1];
 

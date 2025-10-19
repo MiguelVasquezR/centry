@@ -12,7 +12,7 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    const result = await deleteData("category", id);
+    const result = await deleteData("categories", id);
 
     if (result === 200) {
       return NextResponse.json({

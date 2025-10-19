@@ -7,10 +7,23 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import esLocale from "@fullcalendar/core/locales/es";
 
 import { useGetEventsQuery } from "@/src/redux/store/api/eventApi";
-import { EventFormValues } from "@/src/types/event";
+import { EventFormValues, EventType } from "@/src/types/event";
+import GeneralModal from "@/src/component/GeneralModal";
+import { useEffect, useState } from "react";
+import { EventClickArg } from "@fullcalendar/core/index.js";
 
 const Index = () => {
+  const [selectedId, setSelectedId] = useState<string>("");
+  const [selectedEvent, setSelectedEvent] = useState<EventType>();
   const { data: eventsData, isLoading: isLoadingEvents } = useGetEventsQuery();
+
+  useEffect(() => {
+    const find = eventsData?.find((event) => event.id === selectedId);
+
+    if (find) {
+      setSelectedEvent(find);
+    }
+  }, [selectedId]);
 
   const upcomingEvents = (eventsData ?? []).map((event: EventFormValues) => {
     const timePad = event.time ? `T${event.time}` : "T00:00";
@@ -21,6 +34,7 @@ const Index = () => {
       location: event.location,
       description: event.description,
       color: "#9f1239",
+      id: event.id,
     };
   });
 
@@ -39,13 +53,6 @@ const Index = () => {
       </div>
     );
   };
-
-  const eventFilters = [
-    { label: "Todos", active: true },
-    { label: "Proyección" },
-    { label: "Club de lectura" },
-    { label: "Reunión" },
-  ];
 
   if (isLoadingEvents) {
     return <div>Cargando</div>;
@@ -75,6 +82,9 @@ const Index = () => {
             <div className="card has-shadow calendar-card">
               <div className="card-content">
                 <FullCalendar
+                  eventClick={(event: EventClickArg) => {
+                    setSelectedId(event.event._def.publicId);
+                  }}
                   plugins={[dayGridPlugin]}
                   locales={[esLocale]}
                   locale="es"
@@ -115,6 +125,17 @@ const Index = () => {
           </div>
         </div>
       </div>
+
+      <GeneralModal
+        isOpen={selectedId?.length > 0}
+        onClose={() => {
+          setSelectedId("");
+        }}
+        title={selectedEvent?.title}
+        description={selectedEvent?.description}
+      >
+        <div>{selectedEvent?.date.toString() ?? ""}</div>
+      </GeneralModal>
     </>
   );
 };

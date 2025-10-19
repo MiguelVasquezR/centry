@@ -11,8 +11,6 @@ export async function GET(request: NextRequest) {
     const limit =
       Number.isFinite(limitParam) && limitParam > 0 ? limitParam : 12;
 
-    console.log({ page, limit });
-
     const result = await getDataPagination("posts", page, limit);
 
     if (result.status === 200) {

@@ -3,12 +3,10 @@ import { getDataById } from "@/src/firebase/actions";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
-
-    console.log(id);
+    const { id } = await params;
 
     const user = await getDataById("users", id);
 
@@ -21,7 +19,7 @@ export async function GET(
       );
     }
   } catch (error) {
-    console.log("Error fetching post:", error);
+    console.log("Error fetching user:", error);
     return NextResponse.json(
       { status: 500, message: "Internal server error" },
       { status: 500 }

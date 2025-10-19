@@ -9,10 +9,9 @@ export async function POST(request: NextRequest) {
     // Add server timestamp
     const postWithTimestamp = {
       ...data,
-      createdAt: DateTime.now(),
     };
 
-    const result = await writeData("posts", postWithTimestamp);
+    const result = await writeData("categories", postWithTimestamp);
 
     if (result === 200) {
       return NextResponse.json({

@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getDataByEmail, getDataById } from "@/src/firebase/actions";
+import { getDataByEmail } from "@/src/firebase/actions";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { email: string } }
+  { params }: { params: Promise<{ email: string }> }
 ) {
   try {
-    const { email } = params;
+    const { email } = await params;
 
     const user = await getDataByEmail("users", email);
 
@@ -19,7 +19,7 @@ export async function GET(
       );
     }
   } catch (error) {
-    console.log("Error fetching post:", error);
+    console.log("Error fetching user by email:", error);
     return NextResponse.json(
       { status: 500, message: "Internal server error" },
       { status: 500 }

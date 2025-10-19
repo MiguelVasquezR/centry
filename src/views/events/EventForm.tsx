@@ -14,16 +14,19 @@ const categories: Category[] = [
   {
     id: "1",
     title: "Tecnología",
+    type: "event",
     description: "Artículos y novedades sobre software, hardware y desarrollo.",
   },
   {
     id: "2",
     title: "Educación",
+    type: "event",
     description: "Recursos, técnicas y tendencias educativas.",
   },
   {
     id: "3",
     title: "Salud",
+    type: "event",
     description: "Consejos sobre bienestar físico y mental.",
   },
 ];
