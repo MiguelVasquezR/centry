@@ -7,13 +7,33 @@ import { useFetchPostsQuery } from "@/src/redux/store/api/postsApi";
 import { getGreating } from "@/src/utils/utils";
 import CardPost from "../../../component/CardPost";
 import type { PostListItem } from "@/src/types/postList";
+import { useGetEventsQuery } from "@/src/redux/store/api/eventApi";
+import { EventType } from "@/src/types/event";
 
 const Updates = () => {
+  const CardEvent = ({ event }: { event: EventType }) => {
+    const eventDate = DateTime.fromISO(event.date + "T" + event.time);
+
+    return (
+      <li className="mb-2" style={{ width: "100%" }}>
+        <div>
+          <p className="is-size-7 has-text-grey">
+            {eventDate.toFormat("dd MMM yyyy, HH:mm")}
+          </p>
+          <p className="is-size-6">{event.title}</p>
+        </div>
+      </li>
+    );
+  };
+
   const {
     data,
     isLoading: isPostsLoading,
     isError: isPostsError,
   } = useFetchPostsQuery({ limit: 20, page: 1 });
+
+  const { data: eventsData, isLoading: isLoadingEvents } = useGetEventsQuery();
+  const eventToShow = eventsData?.slice(0, 5) || [];
 
   const posts = (data?.posts ?? []) as PostListItem[];
   const [greeting, setGreeting] = useState("");
@@ -25,6 +45,10 @@ const Updates = () => {
       DateTime.now().setLocale("es").toFormat("dd 'de' MMMM, yyyy")
     );
   }, []);
+
+  if (isPostsLoading || isLoadingEvents) {
+    return <div>Cargando</div>;
+  }
 
   return (
     <div className="container">
@@ -71,26 +95,9 @@ const Updates = () => {
               Próximos encuentros
             </p>
             <ul>
-              <li className="mb-2">
-                <p className="is-size-7 has-text-grey">
-                  15 de enero, 7:00 p.m.
-                </p>
-                <p className="is-size-6">
-                  Club de lectura &ldquo;Resistencias&rdquo;
-                </p>
-              </li>
-              <li className="mb-2">
-                <p className="is-size-7 has-text-grey">
-                  21 de enero, 6:30 p.m.
-                </p>
-                <p className="is-size-6">Taller de crónica urbana</p>
-              </li>
-              <li>
-                <p className="is-size-7 has-text-grey">
-                  28 de enero, 5:00 p.m.
-                </p>
-                <p className="is-size-6">Conversatorio con autoras invitadas</p>
-              </li>
+              {eventToShow?.map((event: EventType) => {
+                return <CardEvent key={event.id} event={event} />;
+              })}
             </ul>
             <Link href="/events" className="button is-text is-size-7 mt-3">
               Ver agenda completa

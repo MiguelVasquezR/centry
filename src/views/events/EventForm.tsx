@@ -2,34 +2,53 @@
 
 import { useRouter } from "next/navigation";
 import { Controller, useForm } from "react-hook-form";
-import z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { DateTime } from "luxon";
 import { eventSchema } from "@/src/schemas/event";
 import { useGetCategoriesQuery } from "@/src/redux/store/api/category";
+import { useCreateEventMutation } from "@/src/redux/store/api/eventApi";
+import { EventFormValues } from "@/src/types/event";
+import toast from "react-hot-toast";
 
-type EventFormValues = z.infer<typeof eventSchema>;
+const categories: Category[] = [
+  {
+    id: "1",
+    title: "Tecnología",
+    description: "Artículos y novedades sobre software, hardware y desarrollo.",
+  },
+  {
+    id: "2",
+    title: "Educación",
+    description: "Recursos, técnicas y tendencias educativas.",
+  },
+  {
+    id: "3",
+    title: "Salud",
+    description: "Consejos sobre bienestar físico y mental.",
+  },
+];
 
 const EventForm = () => {
   const router = useRouter();
 
-  const { data: categories, isLoading: isLoadingCategory } =
+  const { data, isLoading: isLoadingCategory } =
     useGetCategoriesQuery(undefined);
+
+  const [createEvent, {}] = useCreateEventMutation();
 
   const {
     control,
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-    watch,
   } = useForm<EventFormValues>({
     resolver: zodResolver(eventSchema),
     defaultValues: {
       title: "",
       description: "",
       type: "",
-      date: DateTime.now().toISO(),
-      time: DateTime.now().toISO(),
+      date: DateTime.now().toISODate(),
+      time: DateTime.now().toFormat("HH:mm"),
       duration: "60",
       location: "",
       responsible: "",
@@ -40,7 +59,10 @@ const EventForm = () => {
   });
 
   const onSubmit = (data: EventFormValues) => {
-    console.log(data);
+    createEvent(data);
+
+    toast.success("Evento guardado correctamente");
+    router.replace("/events");
   };
 
   if (isLoadingCategory) {
@@ -101,11 +123,11 @@ const EventForm = () => {
                     >
                       <div className="select is-fullwidth">
                         <select id="type" {...register("type")}>
-                          {/* {typeOptions.map((option) => (
-                            <option key={option.value} value={option.value}>
-                              {option.label}
+                          {categories.map((option: Category) => (
+                            <option key={option.id || ""} value={option.id}>
+                              {option.title}
                             </option>
-                          ))} */}
+                          ))}
                         </select>
                       </div>
                     </div>
@@ -143,7 +165,7 @@ const EventForm = () => {
                 <div className="column is-6">
                   <div className="field">
                     <label htmlFor="date" className="label">
-                      Fecha y hora *
+                      Fecha *
                     </label>
                     <div className="control">
                       <Controller
@@ -152,17 +174,13 @@ const EventForm = () => {
                         render={({ field }) => (
                           <input
                             id="date"
-                            type="datetime-local"
+                            type="date"
                             className={`input ${
                               errors.date ? "is-danger" : ""
                             }`}
-                            value={watch("date")}
+                            value={field.value ?? ""}
                             onChange={(event) => {
-                              const isoValue = event.target.value;
-                              const parsed = isoValue
-                                ? DateTime.fromISO(isoValue).toJSDate()
-                                : undefined;
-                              field.onChange(parsed);
+                              field.onChange(event.target.value || undefined);
                             }}
                             onBlur={field.onBlur}
                             ref={field.ref}
@@ -172,6 +190,63 @@ const EventForm = () => {
                     </div>
                     {errors.date && (
                       <p className="help is-danger">{errors.date.message}</p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="column is-6">
+                  <div className="field">
+                    <label htmlFor="time" className="label">
+                      Hora *
+                    </label>
+                    <div className="control">
+                      <Controller
+                        control={control}
+                        name="time"
+                        render={({ field }) => (
+                          <input
+                            id="time"
+                            type="time"
+                            className={`input ${
+                              errors.time ? "is-danger" : ""
+                            }`}
+                            value={field.value ?? ""}
+                            onChange={(event) => {
+                              field.onChange(event.target.value || undefined);
+                            }}
+                            onBlur={field.onBlur}
+                            ref={field.ref}
+                          />
+                        )}
+                      />
+                    </div>
+                    {errors.time && (
+                      <p className="help is-danger">{errors.time.message}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="columns">
+                <div className="column is-6">
+                  <div className="field">
+                    <label htmlFor="location" className="label">
+                      Lugar *
+                    </label>
+                    <div className="control">
+                      <input
+                        id="location"
+                        className={`input ${
+                          errors.location ? "is-danger" : ""
+                        }`}
+                        placeholder="Ej. Sala principal, Biblioteca..."
+                        {...register("location")}
+                      />
+                    </div>
+                    {errors.location && (
+                      <p className="help is-danger">
+                        {errors.location.message}
+                      </p>
                     )}
                   </div>
                 </div>
@@ -199,23 +274,6 @@ const EventForm = () => {
                     )}
                   </div>
                 </div>
-              </div>
-
-              <div className="field">
-                <label htmlFor="location" className="label">
-                  Lugar *
-                </label>
-                <div className="control">
-                  <input
-                    id="location"
-                    className={`input ${errors.location ? "is-danger" : ""}`}
-                    placeholder="Ej. Sala principal, Biblioteca..."
-                    {...register("location")}
-                  />
-                </div>
-                {errors.location && (
-                  <p className="help is-danger">{errors.location.message}</p>
-                )}
               </div>
             </div>
 
