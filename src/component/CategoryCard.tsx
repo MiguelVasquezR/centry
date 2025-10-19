@@ -10,6 +10,7 @@ import { useState } from "react";
 import GeneralModal from "./GeneralModal";
 import { useDeleteCategoryMutation } from "../redux/store/api/category";
 import toast from "react-hot-toast";
+import type { Category } from "@/src/types/category";
 
 const CardCategory = ({ category }: { category: Category }) => {
   const [isActive, setIsActive] = useState<boolean>(false);

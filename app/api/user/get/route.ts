@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getData } from "@/src/firebase/actions";
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
     const data = await getData("users");
 

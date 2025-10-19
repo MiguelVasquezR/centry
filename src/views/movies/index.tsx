@@ -20,11 +20,7 @@ const MoviesLibraryView = () => {
 
   useEffect(() => {
     getMore({ page, limit });
-  }, []);
-
-  useEffect(() => {
-    handleChangePage(page);
-  }, [page, limit]);
+  }, [getMore, limit, page]);
 
   useEffect(() => {
     if (error) {
@@ -36,7 +32,6 @@ const MoviesLibraryView = () => {
 
   const handleChangePage = (newPage: number) => {
     setPage(newPage);
-    getMore({ page: newPage, limit });
   };
 
   const filteredMovies = movies.filter((movie) => {

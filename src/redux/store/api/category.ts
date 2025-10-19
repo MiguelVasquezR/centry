@@ -1,3 +1,4 @@
+import { Category } from "@/src/types/category";
 import { apiSlice } from "./index";
 
 export const categoryApi = apiSlice.injectEndpoints({

@@ -1,7 +1,6 @@
 "use client";
 import CardBook from "@/src/component/CardBook";
 import Pagination from "@/src/component/Pagination";
-import { useAuth } from "@/src/firebase/contexts/AuthContext";
 import { useLazyFetchBooksQuery } from "@/src/redux/store/api/booksApi";
 import { useGetCurrentUserQuery } from "@/src/redux/store/api/usersApi";
 import { Book } from "@/src/types/book";
@@ -17,20 +16,14 @@ const BookLibraryView = () => {
     useGetCurrentUserQuery(undefined);
   const { rol = "student" } = currentUser || {};
 
-  const { user } = useAuth();
-
   const [getMore, { data: dataBooks, isLoading: booksIsLoading, error }] =
     useLazyFetchBooksQuery();
 
   const { books, totalPages } = dataBooks || {};
 
   useEffect(() => {
-    getMore({ page: page, limit });
-  }, []);
-
-  useEffect(() => {
-    handleChangePage(page);
-  }, [page, limit]);
+    getMore({ page, limit });
+  }, [getMore, limit, page]);
 
   useEffect(() => {
     if (error) {
@@ -40,7 +33,6 @@ const BookLibraryView = () => {
 
   const handleChangePage = (newPage: number) => {
     setPage(newPage);
-    getMore({ page: newPage, limit });
   };
 
   if (booksIsLoading || isLoadingCurrentUser) {

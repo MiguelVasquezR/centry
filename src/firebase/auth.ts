@@ -11,12 +11,22 @@ import {
 import { auth } from "./app";
 
 // Sign in with email and password
+const getErrorMessage = (error: unknown) => {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  if (typeof error === "string") {
+    return error;
+  }
+  return "Se produjo un error inesperado.";
+};
+
 export const signInWithEmail = async (email: string, password: string) => {
   try {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     return { user: userCredential.user, error: null };
-  } catch (error: any) {
-    return { user: null, error: error.message };
+  } catch (error: unknown) {
+    return { user: null, error: getErrorMessage(error) };
   }
 };
 
@@ -36,8 +46,8 @@ export const signUpWithEmail = async (email: string, password: string, displayNa
     await sendEmailVerification(userCredential.user);
 
     return { user: userCredential.user, error: null };
-  } catch (error: any) {
-    return { user: null, error: error.message };
+  } catch (error: unknown) {
+    return { user: null, error: getErrorMessage(error) };
   }
 };
 
@@ -46,8 +56,8 @@ export const signOutUser = async () => {
   try {
     await signOut(auth);
     return { error: null };
-  } catch (error: any) {
-    return { error: error.message };
+  } catch (error: unknown) {
+    return { error: getErrorMessage(error) };
   }
 };
 
@@ -56,8 +66,8 @@ export const resetPassword = async (email: string) => {
   try {
     await sendPasswordResetEmail(auth, email);
     return { error: null };
-  } catch (error: any) {
-    return { error: error.message };
+  } catch (error: unknown) {
+    return { error: getErrorMessage(error) };
   }
 };
 

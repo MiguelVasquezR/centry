@@ -49,7 +49,7 @@ const GeneralModal: React.FC<GeneralModalProps> = ({
         })}
         onClick={handleCardClick}
       >
-        {(title || onClose) && (
+        {(title || confirmLabel || cancelLabel) && (
           <header className="modal-card-head">
             {title && <p className="modal-card-title">{title}</p>}
             <button className="delete" aria-label="close" onClick={onClose} />

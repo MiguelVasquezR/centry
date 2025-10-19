@@ -23,7 +23,7 @@ const Index = () => {
     if (find) {
       setSelectedEvent(find);
     }
-  }, [selectedId]);
+  }, [eventsData, selectedId]);
 
   const upcomingEvents = (eventsData ?? []).map((event: EventFormValues) => {
     const timePad = event.time ? `T${event.time}` : "T00:00";

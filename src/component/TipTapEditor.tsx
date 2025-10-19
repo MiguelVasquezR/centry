@@ -108,7 +108,7 @@ const TipTapEditor = ({
           levels: [1, 2, 3],
         },
       }),
-      TextStyle.configure({ types: ["textStyle"] }),
+      TextStyle,
       Color.configure({ types: ["textStyle"] }),
       FontFamily.configure({ types: ["textStyle"] }),
     ],

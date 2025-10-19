@@ -71,6 +71,7 @@ const Login = () => {
         setShowForgotPassword(false);
       }
     } catch (error) {
+      console.error("Error al enviar el email de recuperación:", error);
       toast.error("Error al enviar el email de recuperación");
     }
   };

@@ -22,7 +22,8 @@ export const writeData = async (collectionName: string, data: FieldValues) => {
     const dataWithId = { ...data, id: docId };
     await updateDoc(docRef, dataWithId);
     return 200;
-  } catch (_error) {
+  } catch (error) {
+    console.error("Error al guardar datos:", error);
     return 400;
   }
 };
@@ -97,6 +98,7 @@ export const deleteData = async (collectionName: string, id: string) => {
     await deleteDoc(doc(firestore, collectionName, id));
     return 200;
   } catch (error) {
+    console.error("Error al eliminar datos:", error);
     return 400;
   }
 };
@@ -110,6 +112,7 @@ export const updateData = async (
     await updateDoc(doc(firestore, collectionName, id), data);
     return 200;
   } catch (error) {
+    console.error("Error al actualizar datos:", error);
     return 400;
   }
 };

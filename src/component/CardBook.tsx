@@ -15,8 +15,7 @@ const CardBook = ({ book }: { book: Book }) => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<boolean>(false);
   const [deleteBook, { isLoading: isDeleting }] = useDeleteBookMutation();
 
-  const { data: currentUser, isLoading: isLoadingCurrentUser } =
-    useGetCurrentUserQuery(undefined);
+  const { data: currentUser } = useGetCurrentUserQuery(undefined);
   const { rol = "student" } = currentUser || {};
 
   const router = useRouter();

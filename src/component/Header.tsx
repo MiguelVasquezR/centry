@@ -23,7 +23,7 @@ const Header = () => {
 
   const userId = localStorage.getItem("userId") || "";
 
-  const { data: currentUser, isLoading } = useGetCurrentUserQuery(undefined);
+  const { data: currentUser } = useGetCurrentUserQuery(undefined);
   const { rol = "student" } = currentUser || {};
 
   const handleLogout = async () => {
@@ -36,10 +36,11 @@ const Header = () => {
         toast.success("Sesión cerrada exitosamente");
         router.push("/login");
       }
-    } catch (error) {
-      toast.error("Error al cerrar sesión");
-    }
-  };
+  } catch (error) {
+    console.error("Error al cerrar sesión:", error);
+    toast.error("Error al cerrar sesión");
+  }
+};
 
   return (
     <nav className="navbar is-primary is-fixed-top p-2">

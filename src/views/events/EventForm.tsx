@@ -9,8 +9,9 @@ import { useGetCategoriesQuery } from "@/src/redux/store/api/category";
 import { useCreateEventMutation } from "@/src/redux/store/api/eventApi";
 import { EventFormValues } from "@/src/types/event";
 import toast from "react-hot-toast";
+import type { Category } from "@/src/types/category";
 
-const categories: Category[] = [
+const fallbackCategories: Category[] = [
   {
     id: "1",
     title: "Tecnología",
@@ -34,10 +35,16 @@ const categories: Category[] = [
 const EventForm = () => {
   const router = useRouter();
 
-  const { data, isLoading: isLoadingCategory } =
-    useGetCategoriesQuery(undefined);
+  const {
+    data: categoriesData = [],
+    isLoading: isLoadingCategory,
+  } = useGetCategoriesQuery(undefined);
 
-  const [createEvent, {}] = useCreateEventMutation();
+  const categoryOptions = categoriesData.length
+    ? categoriesData
+    : fallbackCategories;
+
+  const [createEvent] = useCreateEventMutation();
 
   const {
     control,
@@ -126,8 +133,11 @@ const EventForm = () => {
                     >
                       <div className="select is-fullwidth">
                         <select id="type" {...register("type")}>
-                          {categories.map((option: Category) => (
-                            <option key={option.id || ""} value={option.id}>
+                          {categoryOptions.map((option: Category) => (
+                            <option
+                              key={option.id ?? option.title}
+                              value={option.id ?? option.title}
+                            >
                               {option.title}
                             </option>
                           ))}

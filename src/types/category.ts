@@ -1,6 +1,6 @@
-type CategoryType = "event" | "movie" | "book";
+export type CategoryType = "event" | "movie" | "book";
 
-interface Category {
+export interface Category {
   id?: string;
   title: string;
   type: CategoryType;

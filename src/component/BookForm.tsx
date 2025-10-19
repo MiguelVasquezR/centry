@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import Image from "next/image";
+import type { Book } from "@/src/types/book";
 
 // Zod schema for book validation
 const bookSchema = z.object({

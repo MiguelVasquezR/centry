@@ -24,8 +24,9 @@ type UserFormData = z.infer<typeof userSchema>;
 const AddUserView = () => {
   const router = useRouter();
   const params = useParams();
-  const { id } = params;
-  const isEditing = id || null;
+  const rawId = params?.id;
+  const userId = Array.isArray(rawId) ? rawId[0] : rawId ?? "";
+  const isEditing = Boolean(userId);
 
   const [selectedAvatar, setSelectedAvatar] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string>("");
@@ -58,23 +59,25 @@ const AddUserView = () => {
   });
 
   useEffect(() => {
-    if (isEditing) {
-      getUser(id);
+    if (!isEditing) {
+      return;
     }
-  }, [isEditing]);
+    getUser(userId);
+  }, [getUser, isEditing, userId]);
 
   useEffect(() => {
     const user = userIdData?.user;
-    if (user) {
-      setValue("biography", user.biography);
-      setValue("email", user.email);
-      setValue("imageUrl", user.imageUrl);
-      setValue("name", user.name);
-      setValue("topics", user.topics.join(","));
-      setValue("tuition", user.tuition);
-      setAvatarPreview(user.imageUrl);
+    if (!user) {
+      return;
     }
-  }, [userIdData]);
+    setValue("biography", user.biography);
+    setValue("email", user.email);
+    setValue("imageUrl", user.imageUrl);
+    setValue("name", user.name);
+    setValue("topics", user.topics.join(","));
+    setValue("tuition", user.tuition);
+    setAvatarPreview(user.imageUrl);
+  }, [setValue, userIdData]);
 
   const watchedName = watch("name");
   const watchedEmail = watch("email");
@@ -145,10 +148,11 @@ const AddUserView = () => {
         tuition: data.tuition,
         imageUrl: data.imageUrl,
         isActive: true,
+        rol: userIdData?.user.rol ?? "student",
       };
 
       if (isEditing) {
-        await updateUser({ id: userIdData?.user.id, ...payload });
+        await updateUser({ id: userIdData?.user.id ?? userId, ...payload });
         toast.success("Usuario actualizado correctamente");
       } else {
         await createUser(payload).unwrap();

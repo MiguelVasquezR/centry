@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -45,14 +45,15 @@ const CreatePostView = () => {
 
   const [createPost, { isLoading: isAddingPost }] = useCreatePostMutation();
   const { data: dataBooks, isLoading: isLoadingBooks } = useGetBooksQuery({});
-  const books = dataBooks?.data || [];
   const bookOptions = useMemo<BookOption[]>(
-    () =>
-      books.map((book: Book) => ({
+    () => {
+      const currentBooks = dataBooks?.data ?? [];
+      return currentBooks.map((book: Book) => ({
         value: book.id,
         label: `${book.titulo} — ${book.author ?? book.autor}`,
-      })),
-    [books]
+      }));
+    },
+    [dataBooks]
   );
 
   const {
@@ -604,7 +605,7 @@ const CreatePostView = () => {
                         isClearable
                         isSearchable
                         noOptionsMessage={() =>
-                          books.length
+                          bookOptions.length
                             ? "Sin coincidencias"
                             : "No hay libros disponibles"
                         }

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { writeData } from "@/src/firebase/actions";
-import { DateTime } from "luxon";
 
 export async function POST(request: NextRequest) {
   try {

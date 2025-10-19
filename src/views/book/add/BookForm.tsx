@@ -12,7 +12,7 @@ import {
   useUpdateBookMutation,
   useLazyGetBookByIdQuery,
 } from "@/src/redux/store/api/booksApi";
-import { Book } from "@/src/types/book";
+import type { Book } from "@/src/types/book";
 import toast from "react-hot-toast";
 
 // Zod schema for book validation
@@ -204,13 +204,19 @@ const BookForm = ({ bookId, mode = "add" }: BookFormProps) => {
     try {
       let imageUrl =
         bookData?.imagen ||
+        bookData?.image ||
         "https://res.cloudinary.com/dvt4vznxn/image/upload/v1758764097/138617_ar3v0q.jpg";
 
       if (selectedImage) {
         imageUrl = await uploadToCloudinary(selectedImage);
       }
 
-      const bookPayload = { ...data, imagen: imageUrl };
+      const bookPayload: Omit<Book, "id"> = {
+        ...data,
+        autor: data.author,
+        image: imageUrl,
+        imagen: imageUrl,
+      };
 
       if (mode === "edit" && bookId) {
         // Update existing book

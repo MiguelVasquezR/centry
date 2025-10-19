@@ -1,18 +1,10 @@
 "use client";
 
 import { useGetCategoriesQuery } from "@/src/redux/store/api/category";
-import {
-  ClipboardList,
-  Clock,
-  ArrowRight,
-  Film,
-  Book,
-  PlusCircle,
-  Layers,
-  UserPlus,
-} from "lucide-react";
+import { Book } from "lucide-react";
 import Link from "next/link";
 import CategoryCard from "@/src/component/CategoryCard";
+import type { Category } from "@/src/types/category";
 
 const AdminDashboard = () => {
   const { data: categoriesData, isLoading: isLoadingCategories } =
