@@ -217,25 +217,25 @@ const AdminDashboard = () => {
                           href={href}
                           className="sidebar__link"
                         >
-                          <div className="sidebar__link-top">
-                            <span className="sidebar__link-icon">
-                              <Icon size={22} />
-                            </span>
-                            <span className="sidebar__chevron-wrapper">
-                              <ArrowRight
-                                size={20}
-                                className="sidebar__chevron"
-                              />
-                            </span>
+                          <div className="is-flex is-justify-content-space-between">
+                            <div className="sidebar__link-body">
+                              <span className="sidebar__link-title">
+                                {actionTitle}
+                              </span>
+                              <span className="sidebar__link-subtitle">
+                                {actionDescription}
+                              </span>
+                            </div>
+                            <div className="sidebar__link-top is-flex is-justify-content-end">
+                              <span className="sidebar__chevron-wrapper">
+                                <ArrowRight
+                                  size={20}
+                                  className="sidebar__chevron"
+                                />
+                              </span>
+                            </div>
                           </div>
-                          <div className="sidebar__link-body">
-                            <span className="sidebar__link-title">
-                              {actionTitle}
-                            </span>
-                            <span className="sidebar__link-subtitle">
-                              {actionDescription}
-                            </span>
-                          </div>
+                          <hr />
                         </Link>
                       )
                     )}
