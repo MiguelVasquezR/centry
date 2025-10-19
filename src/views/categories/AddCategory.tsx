@@ -1,27 +1,48 @@
 "use client";
 
-import { useMemo } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useMemo } from "react";
+import { ChevronLeft, Info, Layers, ListChecks, Sparkles } from "lucide-react";
+import { useParams, useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { ChevronLeft, Info, Layers, ListChecks, Sparkles } from "lucide-react";
-import toast from "react-hot-toast";
 
-import { useCreateCategoryMutation } from "@/src/redux/store/api/category";
+import {
+  useCreateCategoryMutation,
+  useLazyGetCategoryByIdQuery,
+  useUpdateCategoryMutation,
+} from "@/src/redux/store/api/category";
 import { categorySchema } from "@/src/schemas/category";
 
 type CategoryFormValues = z.infer<typeof categorySchema>;
 
-const CATEGORY_TYPE_OPTIONS = [
+const MIN_DESCRIPTION_LENGTH = 10;
+
+const CATEGORY_TYPE_OPTIONS: Array<{
+  value: CategoryFormValues["type"];
+  label: string;
+}> = [
   { value: "event", label: "Evento" },
   { value: "movie", label: "Película" },
   { value: "book", label: "Libro" },
 ];
 
+const DEFAULT_FORM_VALUES: CategoryFormValues = {
+  title: "",
+  type: "event",
+  description: "",
+};
+
 const AddCategoryView = () => {
   const router = useRouter();
-  const [createCategory, { isLoading }] = useCreateCategoryMutation();
+  const params = useParams();
+  const rawId = params?.id;
+  const categoryId = Array.isArray(rawId) ? rawId[0] : rawId?.toString() ?? "";
+  const isEditing = Boolean(categoryId);
+
+  const [createCategory] = useCreateCategoryMutation();
+  const [updateCategory] = useUpdateCategoryMutation();
 
   const {
     register,
@@ -31,12 +52,31 @@ const AddCategoryView = () => {
     reset,
   } = useForm<CategoryFormValues>({
     resolver: zodResolver(categorySchema),
-    defaultValues: {
-      title: "",
-      type: "event",
-      description: "",
-    },
+    defaultValues: DEFAULT_FORM_VALUES,
   });
+
+  const [
+    fetchCategoryById,
+    { data: categoryData, isLoading: isLoadingCategory },
+  ] = useLazyGetCategoryByIdQuery();
+
+  useEffect(() => {
+    if (!isEditing) {
+      return;
+    }
+    fetchCategoryById(categoryId);
+  }, [categoryId, fetchCategoryById, isEditing]);
+
+  useEffect(() => {
+    if (!categoryData) {
+      return;
+    }
+    reset({
+      description: categoryData.description,
+      title: categoryData.title,
+      type: categoryData.type,
+    });
+  }, [categoryData, reset]);
 
   const watchedTitle = watch("title");
   const watchedType = watch("type");
@@ -56,29 +96,44 @@ const AddCategoryView = () => {
     const checks = [
       Boolean(watchedTitle?.trim().length),
       Boolean(watchedType),
-      Boolean((watchedDescription?.trim().length ?? 0) >= 10),
+      Boolean(
+        (watchedDescription?.trim().length ?? 0) >= MIN_DESCRIPTION_LENGTH
+      ),
     ];
 
     const completed = checks.filter(Boolean).length;
     return Math.round((completed / checks.length) * 100);
   }, [watchedDescription, watchedTitle, watchedType]);
 
-  const onSubmit = async (values: CategoryFormValues) => {
+  const handleFormSubmit = handleSubmit(async (values) => {
     try {
-      await createCategory(values).unwrap();
-      toast.success("Categoría creada correctamente");
+      if (isEditing) {
+        const event = {
+          ...values,
+          id: categoryId,
+        };
+        await updateCategory(event);
+        toast.success("Categoría editada correctamente");
+      } else {
+        await createCategory(values).unwrap();
+        toast.success("Categoría creada correctamente");
+      }
       reset();
       router.replace("/admin");
     } catch (error) {
-      console.log(values);
       const message =
         (error as { data?: { message?: string } })?.data?.message ??
         "No se pudo crear la categoría. Intenta nuevamente.";
       toast.error(message);
     }
-  };
+  });
 
-  const isSaving = isSubmitting || isLoading;
+  const isSaving = isSubmitting || isLoadingCategory;
+  const isAwaitingExistingCategory = isEditing && isLoadingCategory;
+
+  if (isAwaitingExistingCategory) {
+    return <div>Cargando</div>;
+  }
 
   return (
     <section className="section" style={{ paddingTop: "2rem" }}>
@@ -96,10 +151,7 @@ const AddCategoryView = () => {
 
         <div className="columns is-variable is-5">
           <div className="column is-8">
-            <form
-              className="box shadowed-form"
-              onSubmit={handleSubmit(onSubmit)}
-            >
+            <form className="box shadowed-form" onSubmit={handleFormSubmit}>
               <div className="mb-5">
                 <h1 className="title is-4 mb-2">Nueva categoría</h1>
                 <p className="subtitle is-6 has-text-grey-dark">
@@ -189,7 +241,7 @@ const AddCategoryView = () => {
                   }`}
                   disabled={isSaving}
                 >
-                  Guardar categoría
+                  {isEditing ? "Editar categoría" : "Guardar categoría"}
                 </button>
               </div>
             </form>
@@ -245,7 +297,8 @@ const AddCategoryView = () => {
                     <ListChecks
                       size={16}
                       className={
-                        (watchedDescription?.trim().length ?? 0) >= 10
+                        (watchedDescription?.trim().length ?? 0) >=
+                        MIN_DESCRIPTION_LENGTH
                           ? "has-text-success"
                           : ""
                       }

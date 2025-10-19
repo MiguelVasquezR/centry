@@ -3,9 +3,9 @@ import { apiSlice } from "./index";
 export const categoryApi = apiSlice.injectEndpoints({
   endpoints: (build) => ({
     getCategoryById: build.query<Category, string>({
-      query: (id) => `/book/${id}`,
+      query: (id) => `/category/${id}`,
       transformResponse: (response: Category) => response,
-      providesTags: (result, error, id) => [{ type: "books", id }],
+      providesTags: (result, error, id) => [{ type: "category", id }],
     }),
     createCategory: build.mutation<Category, Omit<Category, "id">>({
       query: (book) => ({
@@ -13,7 +13,7 @@ export const categoryApi = apiSlice.injectEndpoints({
         method: "POST",
         body: book,
       }),
-      invalidatesTags: ["books"],
+      invalidatesTags: ["category"],
     }),
     updateCategory: build.mutation<Category, Category>({
       query: (book) => ({
@@ -40,11 +40,18 @@ export const categoryApi = apiSlice.injectEndpoints({
         "category",
       ],
     }),
-    getCategories: build.query({
+    getCategories: build.query<Category[], void>({
       query: () => ({
         url: "/category/getAll",
         method: "GET",
       }),
+      providesTags: ["category"],
+      transformResponse: (response: {
+        category: Category[];
+        status: number;
+      }) => {
+        return response?.category || [];
+      },
     }),
   }),
 });
