@@ -11,6 +11,53 @@ import { useGetEventsQuery } from "@/src/redux/store/api/eventApi";
 import { EventType } from "@/src/types/event";
 
 const Updates = () => {
+  const getCreatedAtMillis = (value: PostListItem["createdAt"]) => {
+    if (!value) {
+      return 0;
+    }
+
+    if (typeof value === "number") {
+      return value;
+    }
+
+    if (typeof value === "string") {
+      const parsedISO = DateTime.fromISO(value);
+      if (parsedISO.isValid) {
+        return parsedISO.toMillis();
+      }
+
+      const parsedFallback = DateTime.fromFormat(value, "dd/MM/yyyy HH:mm");
+      if (parsedFallback.isValid) {
+        return parsedFallback.toMillis();
+      }
+
+      const native = Date.parse(value);
+      return Number.isNaN(native) ? 0 : native;
+    }
+
+    if (value instanceof Date) {
+      return value.getTime();
+    }
+
+    if (
+      typeof value === "object" &&
+      "seconds" in value &&
+      typeof (value as Record<string, unknown>).seconds === "number"
+    ) {
+      const timestamp = value as Record<string, unknown>;
+      const seconds =
+        typeof timestamp.seconds === "number" ? timestamp.seconds : 0;
+      const nanos =
+        "nanoseconds" in timestamp &&
+        typeof timestamp.nanoseconds === "number"
+          ? timestamp.nanoseconds
+          : 0;
+      return seconds * 1000 + Math.round(nanos / 1_000_000);
+    }
+
+    return 0;
+  };
+
   const CardEvent = ({ event }: { event: EventType }) => {
     const eventDate = DateTime.fromISO(event.date + "T" + event.time);
 
@@ -85,9 +132,15 @@ const Updates = () => {
               comunidad.
             </div>
           )}
-          {posts.map((post) => (
-            <CardPost key={post.id} post={post} />
-          ))}
+          {[...posts]
+            .sort(
+              (a, b) =>
+                getCreatedAtMillis(b.createdAt) -
+                getCreatedAtMillis(a.createdAt)
+            )
+            .map((post) => (
+              <CardPost key={post.id} post={post} />
+            ))}
         </div>
         <aside className="column is-3">
           <div className="card p-4">
