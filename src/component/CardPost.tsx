@@ -10,6 +10,8 @@ import { useWindowSize } from "react-use";
 import Confetti from "react-confetti";
 import { useEffect, useRef, useState } from "react";
 import { useUpdatePostMutation } from "../redux/store/api/postsApi";
+import { useLazyGetUserByIdQuery } from "../redux/store/api/usersApi";
+import { User } from "../types/user";
 
 const CardPost = ({ post }: { post: PostListItem }) => {
   const coverImage = post.imageUrl?.[0] || fallbackCover;
@@ -34,6 +36,22 @@ const CardPost = ({ post }: { post: PostListItem }) => {
 
   const currenId = localStorage.getItem("userId") ?? "";
   const changeColor = post.reactions.find((v: string) => v === currenId);
+
+  const [getUser, { data: author, isLoading: isLoadingAuthor }] =
+    useLazyGetUserByIdQuery();
+  const [authorPost, setAuthorPost] = useState<User>();
+
+  useEffect(() => {
+    if (post) {
+      getUser(post.authorId);
+    }
+  }, [post]);
+
+  useEffect(() => {
+    if (author?.user) {
+      setAuthorPost(author.user as User);
+    }
+  }, [author]);
 
   const setReaction = () => {
     if (!currenId) {
@@ -104,11 +122,15 @@ const CardPost = ({ post }: { post: PostListItem }) => {
               fontSize: "1.1rem",
             }}
           >
-            {authorInitial}
+            {authorPost?.imageUrl ? (
+              <img src={authorPost?.imageUrl} alt="" />
+            ) : (
+              authorInitial
+            )}
           </div>
           <div>
             <p className="is-size-6 has-text-weight-semibold">
-              {post.authorId || "Autor desconocido"}
+              {authorPost?.name} | {authorPost?.email}
             </p>
             <div className="is-flex is-align-items-center is-gap-1">
               <span className="is-size-7 has-text-grey">

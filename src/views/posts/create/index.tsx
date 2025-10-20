@@ -45,16 +45,13 @@ const CreatePostView = () => {
 
   const [createPost, { isLoading: isAddingPost }] = useCreatePostMutation();
   const { data: dataBooks, isLoading: isLoadingBooks } = useGetBooksQuery({});
-  const bookOptions = useMemo<BookOption[]>(
-    () => {
-      const currentBooks = dataBooks?.data ?? [];
-      return currentBooks.map((book: Book) => ({
-        value: book.id,
-        label: `${book.titulo} — ${book.author ?? book.autor}`,
-      }));
-    },
-    [dataBooks]
-  );
+  const bookOptions = useMemo<BookOption[]>(() => {
+    const currentBooks = dataBooks?.data ?? [];
+    return currentBooks.map((book: Book) => ({
+      value: book.id,
+      label: `${book.titulo} — ${book.author ?? book.autor}`,
+    }));
+  }, [dataBooks]);
 
   const {
     register,
@@ -261,6 +258,7 @@ const CreatePostView = () => {
         content,
         imageUrl: imageUrls,
         createdAt: new Date(),
+        authorId: localStorage.getItem("userId") || "",
         reactions: [],
         readings: [],
       };

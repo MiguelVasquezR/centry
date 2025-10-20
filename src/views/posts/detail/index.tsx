@@ -7,6 +7,9 @@ import { useParams, useRouter } from "next/navigation";
 import { useFetchPostByIdQuery } from "@/src/redux/store/api/postsApi";
 import { ChevronLeft, BookOpen, Eye, Heart } from "lucide-react";
 import type { FirestoreTimestamp } from "@/src/types/postList";
+import { useLazyGetUserByIdQuery } from "@/src/redux/store/api/usersApi";
+import { useEffect, useState } from "react";
+import { User } from "@/src/types/user";
 
 const coerceDateTime = (value: unknown): DateTime | null => {
   if (!value) return null;
@@ -65,12 +68,28 @@ const PostDetailView = () => {
   const params = useParams();
   const router = useRouter();
   const postId = typeof params?.id === "string" ? params.id : "";
+  const [authorPost, setAuthorPost] = useState<User>();
 
   const {
     data: post,
     isLoading,
     isError,
   } = useFetchPostByIdQuery(postId, { skip: !postId });
+
+  const [getUser, { data: author, isLoading: isLoadingAuthor }] =
+    useLazyGetUserByIdQuery();
+
+  useEffect(() => {
+    if (post) {
+      getUser(post.authorId);
+    }
+  }, [post]);
+
+  useEffect(() => {
+    if (author?.user) {
+      setAuthorPost(author.user as User);
+    }
+  }, [author]);
 
   if (!postId) {
     return (
@@ -82,7 +101,7 @@ const PostDetailView = () => {
     );
   }
 
-  if (isLoading) {
+  if (isLoading || isLoadingAuthor) {
     return (
       <div className="container">
         <div className="has-text-centered my-6">
@@ -230,9 +249,12 @@ const PostDetailView = () => {
             <div className="card-content">
               <p className="title is-6 mb-3">Datos de la publicación</p>
               <p className="is-size-7 has-text-grey">Autor del post</p>
-              <p className="is-size-6 has-text-weight-semibold">
-                {post.authorId}
-              </p>
+              <Link
+                href={`/users/${authorPost?.id}`}
+                className="is-size-6 has-text-weight-semibold"
+              >
+                {authorPost?.name}
+              </Link>
               <hr />
               <p className="is-size-7 has-text-grey">Visibilidad</p>
               <p className="is-size-6 has-text-weight-semibold">
