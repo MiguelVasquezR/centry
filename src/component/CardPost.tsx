@@ -6,6 +6,10 @@ import Link from "next/link";
 import { formatPostDate, getExcerpt, getReadingTime } from "@/src/utils/utils";
 import { fallbackCover } from "../constants";
 import type { PostListItem } from "@/src/types/postList";
+import { useWindowSize } from "react-use";
+import Confetti from "react-confetti";
+import { useEffect, useRef, useState } from "react";
+import { useUpdatePostMutation } from "../redux/store/api/postsApi";
 
 const CardPost = ({ post }: { post: PostListItem }) => {
   const coverImage = post.imageUrl?.[0] || fallbackCover;
@@ -22,8 +26,69 @@ const CardPost = ({ post }: { post: PostListItem }) => {
   const relatedBookId = post.preference?.book;
   const relatedBookUrl = relatedBookId ? `/book/${relatedBookId}` : undefined;
 
+  const { width, height } = useWindowSize();
+  const [runGlobes, setRunGlobes] = useState(false);
+  const confettiTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const [updatePost] = useUpdatePostMutation();
+
+  const currenId = localStorage.getItem("userId") ?? "";
+  const changeColor = post.reactions.find((v: string) => v === currenId);
+
+  const setReaction = () => {
+    if (!currenId) {
+      return;
+    }
+
+    const existingReactions = Array.isArray(post.reactions)
+      ? post.reactions
+      : [];
+
+    const alreadyReacted = existingReactions.includes(currenId);
+    const updatedReactions = alreadyReacted
+      ? existingReactions.filter((id) => id !== currenId)
+      : [...existingReactions, currenId];
+
+    const reactionNew = {
+      ...post,
+      reactions: updatedReactions,
+    };
+
+    updatePost(reactionNew);
+
+    if (alreadyReacted) {
+      setRunGlobes(false);
+      if (confettiTimeoutRef.current) {
+        clearTimeout(confettiTimeoutRef.current);
+        confettiTimeoutRef.current = null;
+      }
+      return;
+    }
+
+    setRunGlobes(true);
+    if (confettiTimeoutRef.current) {
+      clearTimeout(confettiTimeoutRef.current);
+    }
+    confettiTimeoutRef.current = setTimeout(() => {
+      setRunGlobes(false);
+      confettiTimeoutRef.current = null;
+    }, 5000);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (confettiTimeoutRef.current) {
+        clearTimeout(confettiTimeoutRef.current);
+      }
+    };
+  }, []);
+
   return (
     <article className="card p-5 mb-4 is-clickable">
+      {runGlobes && (
+        <Confetti tweenDuration={1} width={width} height={height} />
+      )}
+
       <header className="is-flex is-justify-content-space-between is-align-items-start is-flex-wrap-wrap">
         <div className="is-flex is-align-items-center is-gap-3">
           <div
@@ -109,8 +174,15 @@ const CardPost = ({ post }: { post: PostListItem }) => {
 
       <footer className="is-flex is-align-items-center is-justify-content-space-between mt-4">
         <div className="is-flex is-align-items-center is-gap-4">
-          <div className="is-flex is-align-items-center is-gap-1">
-            <Heart size={18} />
+          <div
+            className="is-flex is-align-items-center is-gap-1"
+            onClick={setReaction}
+          >
+            <Heart
+              size={18}
+              color={changeColor ? "red" : "black"}
+              fill={changeColor ? "red" : "white"}
+            />
             <span className="is-size-7 has-text-weight-semibold">
               {reactions} reacciones
             </span>
