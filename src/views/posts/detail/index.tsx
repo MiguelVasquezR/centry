@@ -4,7 +4,10 @@ import { DateTime } from "luxon";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useFetchPostByIdQuery } from "@/src/redux/store/api/postsApi";
+import {
+  useFetchPostByIdQuery,
+  useUpdatePostMutation,
+} from "@/src/redux/store/api/postsApi";
 import { ChevronLeft, BookOpen, Eye, Heart } from "lucide-react";
 import type { FirestoreTimestamp } from "@/src/types/postList";
 import { useLazyGetUserByIdQuery } from "@/src/redux/store/api/usersApi";
@@ -76,6 +79,8 @@ const PostDetailView = () => {
     isError,
   } = useFetchPostByIdQuery(postId, { skip: !postId });
 
+  const [updatePost] = useUpdatePostMutation();
+
   const [getUser, { data: author, isLoading: isLoadingAuthor }] =
     useLazyGetUserByIdQuery();
 
@@ -90,6 +95,23 @@ const PostDetailView = () => {
       setAuthorPost(author.user as User);
     }
   }, [author]);
+
+  useEffect(() => {
+    if (!post || !author) return;
+
+    const userId = localStorage.getItem("userId");
+    if (!userId) return;
+
+    const alreadyRead = post.readings?.includes(userId);
+    if (alreadyRead) return;
+
+    const updatedPost = {
+      ...post,
+      readings: [...(post.readings || []), userId],
+    };
+
+    updatePost(updatedPost);
+  }, [post, author]);
 
   if (!postId) {
     return (
