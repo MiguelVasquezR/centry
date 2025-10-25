@@ -2,24 +2,41 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import { useLazyGetBookByIdQuery } from "../../../redux/store/api/booksApi";
+import { useFetchPostsByBookQuery } from "../../../redux/store/api/postsApi";
 import { Book } from "@/src/types/book";
+import type { Post } from "@/src/types/post";
 import Image from "next/image";
 import { ChevronLeft } from "lucide-react";
 
 const BookDetailsView = () => {
   const [book, setBook] = useState<Book>();
-  const { id: idBook } = useParams();
+  const params = useParams();
+  const rawBookId = params?.id;
+  const bookId =
+    typeof rawBookId === "string"
+      ? rawBookId
+      : Array.isArray(rawBookId)
+      ? rawBookId[0]
+      : "";
   const router = useRouter();
 
   const [getBookById, { data: dataBook, isLoading: isLoadingBook }] =
     useLazyGetBookByIdQuery();
+  const {
+    data: bookComments = [],
+    isLoading: isLoadingComments,
+    isFetching: isFetchingComments,
+  } = useFetchPostsByBookQuery(bookId, {
+    skip: !bookId,
+  });
 
   useEffect(() => {
-    if (idBook && typeof idBook === "string") {
-      getBookById(idBook);
+    if (bookId) {
+      getBookById(bookId);
     }
-  }, [idBook, getBookById]);
+  }, [bookId, getBookById]);
 
   useEffect(() => {
     setBook(dataBook);
@@ -62,7 +79,17 @@ const BookDetailsView = () => {
               <button className="button is-primary has-text-white">
                 Solicitar Prestamo
               </button>
-              <button className="button is-primary is-outlined">
+              <button
+                type="button"
+                className="button is-primary is-outlined"
+                onClick={() => {
+                  if (book?.id) {
+                    router.push(`/posts/create?bookId=${encodeURIComponent(book.id)}`);
+                  } else {
+                    router.push("/posts/create");
+                  }
+                }}
+              >
                 Comentar
               </button>
             </div>
@@ -72,7 +99,7 @@ const BookDetailsView = () => {
         <div className="column">
           <div className="is-flex is-justify-content-center is-flex-direction-column is-align-items-center is-gap-2">
             <Image
-              src={book?.imagen || ""}
+              src={book?.imagen || book?.image ||"https://res.cloudinary.com/dvt4vznxn/image/upload/v1758764097/138617_ar3v0q.jpg"}
               alt="imagen"
               height={132}
               width={132}
@@ -102,6 +129,46 @@ const BookDetailsView = () => {
           <div>
             <p className="is-size-5 has-text-weight-bold">Comentarios</p>
             <br />
+          </div>
+          <div className="is-flex is-flex-direction-column is-gap-3">
+            {isLoadingComments || isFetchingComments ? (
+              <p className="has-text-grey">Cargando comentarios...</p>
+            ) : bookComments.length ? (
+              bookComments.map((comment: Post) => {
+                const plainContent = comment.content
+                  ?.replace(/<[^>]+>/g, " ")
+                  .replace(/\s+/g, " ")
+                  .trim();
+                const preview = plainContent
+                  ? `${plainContent.slice(0, 140)}${
+                      plainContent.length > 140 ? "…" : ""
+                    }`
+                  : "Sin contenido";
+
+                return (
+                  <div
+                    key={comment.id}
+                    className="box has-background-light"
+                    style={{ borderRadius: "12px" }}
+                  >
+                    <p className="has-text-weight-semibold mb-1">
+                      {comment.title}
+                    </p>
+                    <p className="is-size-7 has-text-grey mb-2">{preview}</p>
+                    <Link
+                      href={`/posts/${comment.id}`}
+                      className="is-size-7 has-text-link has-text-weight-semibold"
+                    >
+                      Ver detalle
+                    </Link>
+                  </div>
+                );
+              })
+            ) : (
+              <p className="has-text-grey">
+                Aún no hay comentarios para este libro.
+              </p>
+            )}
           </div>
         </div>
       </div>

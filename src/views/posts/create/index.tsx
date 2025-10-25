@@ -1,10 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   ChevronLeft,
   Upload,
@@ -28,7 +28,7 @@ const postSchema = z.object({
   authorId: z.string().min(1, "El autor es requerido"),
   preference: z.object({
     visibleBy: z.enum(["general", "generation"]),
-    book: z.string().min(1, "El libro asociado es requerido"),
+    book: z.string().optional(),
   }),
 });
 
@@ -37,6 +37,8 @@ type BookOption = { value: string; label: string };
 
 const CreatePostView = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const bookIdParam = searchParams.get("bookId");
   const [content, setContent] = useState("");
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
@@ -53,6 +55,19 @@ const CreatePostView = () => {
     }));
   }, [dataBooks]);
 
+  const defaultBookValue = useMemo(() => {
+    if (
+      bookIdParam &&
+      bookOptions.some((option) => option.value === bookIdParam)
+    ) {
+      return bookIdParam;
+    }
+
+    return bookOptions[0]?.value;
+  }, [bookIdParam, bookOptions]);
+
+  const hasAppliedDefaultBook = useRef(false);
+
   const {
     register,
     handleSubmit,
@@ -68,26 +83,42 @@ const CreatePostView = () => {
       authorId: "current-user-id", // TODO: Get from auth context
       preference: {
         visibleBy: "general",
-        book: "",
+        book: defaultBookValue,
       },
     },
   });
 
+  useEffect(() => {
+    if (hasAppliedDefaultBook.current) {
+      return;
+    }
+
+    if (defaultBookValue) {
+      setValue("preference.book", defaultBookValue, {
+        shouldDirty: false,
+        shouldTouch: false,
+      });
+      hasAppliedDefaultBook.current = true;
+    }
+  }, [defaultBookValue, setValue]);
+
   const watchedVisibility = watch("preference.visibleBy");
   const watchedTitle = watch("title");
-  const watchedBook = watch("preference.book");
   const plainContent = content.replace(/<[^>]*>/g, " ").trim();
   const wordCount = plainContent ? plainContent.split(/\s+/).length : 0;
-  const completion = Math.min(
-    100,
-    Math.round(
-      ((watchedTitle ? 1 : 0) +
-        (plainContent.length >= 10 ? 1 : 0) +
-        (selectedImages.length > 0 ? 1 : 0) +
-        (watchedBook ? 1 : 0)) *
-        25
-    )
-  );
+  const completionFactors = [
+    watchedTitle ? 1 : 0,
+    plainContent.length >= 10 ? 1 : 0,
+    selectedImages.length > 0 ? 1 : 0,
+  ];
+  const completion =
+    completionFactors.length === 0
+      ? 0
+      : Math.round(
+          (completionFactors.reduce((sum, factor) => sum + factor, 0) /
+            completionFactors.length) *
+            100
+        );
 
   const addImages = (files: File[]) => {
     const validFiles = files.filter((file) => file.type.startsWith("image/"));
@@ -253,8 +284,14 @@ const CreatePostView = () => {
       }
 
       // Save to Firebase using RTK Query
+      const normalizedPreference = {
+        ...data.preference,
+        book: data.preference.book ?? undefined,
+      };
+
       const postData = {
         ...data,
+        preference: normalizedPreference,
         content,
         imageUrl: imageUrls,
         createdAt: new Date(),
@@ -589,7 +626,7 @@ const CreatePostView = () => {
                 </div>
 
                 <div className="field">
-                  <label className="label">Libro asociado</label>
+                  <label className="label">Libro asociado (opcional)</label>
                   <Controller
                     control={control}
                     name="preference.book"
@@ -599,7 +636,7 @@ const CreatePostView = () => {
                         inputId="associated-book-select"
                         options={bookOptions}
                         classNamePrefix="react-select"
-                        placeholder="Selecciona un libro"
+                        placeholder="Selecciona un libro (opcional)"
                         isClearable
                         isSearchable
                         noOptionsMessage={() =>
@@ -613,7 +650,7 @@ const CreatePostView = () => {
                           ) ?? null
                         }
                         onChange={(option) =>
-                          field.onChange(option ? option.value : "")
+                          field.onChange(option ? option.value : undefined)
                         }
                         onBlur={field.onBlur}
                         styles={selectStyles}
@@ -626,7 +663,8 @@ const CreatePostView = () => {
                     </p>
                   )}
                   <p className="help">
-                    Vincula la publicación con una lectura recomendada.
+                    Vincula la publicación con una lectura recomendada o deja el
+                    campo vacío si no aplica.
                   </p>
                 </div>
               </div>

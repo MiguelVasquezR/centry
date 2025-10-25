@@ -164,3 +164,23 @@ export const getData = async (collectionName: string) => {
     throw error;
   }
 };
+
+export const getPostsByBook = async (bookId: string) => {
+  try {
+    if (!bookId) {
+      return [];
+    }
+
+    const postsRef = collection(firestore, "posts");
+    const postsQuery = query(postsRef, where("preference.book", "==", bookId));
+    const snapshot = await getDocs(postsQuery);
+
+    return snapshot.docs.map((docSnap) => ({
+      id: docSnap.id,
+      ...docSnap.data(),
+    }));
+  } catch (error) {
+    console.error("Error al obtener posts por libro:", error);
+    return [];
+  }
+};

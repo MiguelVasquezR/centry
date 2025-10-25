@@ -9,6 +9,6 @@ export interface Post {
   imageUrl: string[];
   preference: {
     visibleBy: "general" | "generation";
-    book: string;
+    book?: string;
   };
 }

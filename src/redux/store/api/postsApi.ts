@@ -56,6 +56,24 @@ export const postsApi = apiSlice.injectEndpoints({
       }),
       invalidatesTags: (result, error, id) => [{ type: "posts", id }],
     }),
+    fetchPostsByBook: build.query<Post[], string>({
+      query: (bookId) => ({
+        url: `post/book/${bookId}`,
+        method: "GET",
+      }),
+      transformResponse: (response: {
+        posts?: Post[];
+        status?: number;
+        total?: number;
+      }) => response?.posts ?? [],
+      providesTags: (result, error, bookId) =>
+        result && result.length
+          ? [
+              ...result.map(({ id }) => ({ type: "posts" as const, id })),
+              { type: "posts" as const, id: `book-${bookId}` },
+            ]
+          : [{ type: "posts" as const, id: `book-${bookId}` }],
+    }),
   }),
 });
 
@@ -63,6 +81,7 @@ export const {
   useFetchPostsQuery,
   useLazyFetchPostsQuery,
   useFetchPostByIdQuery,
+  useFetchPostsByBookQuery,
   useCreatePostMutation,
   useUpdatePostMutation,
   useDeletePostMutation,
