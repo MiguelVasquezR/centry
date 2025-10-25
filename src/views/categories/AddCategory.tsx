@@ -14,6 +14,7 @@ import {
   useUpdateCategoryMutation,
 } from "@/src/redux/store/api/category";
 import { categorySchema } from "@/src/schemas/category";
+import Loader from "@/src/component/Loader";
 
 type CategoryFormValues = z.infer<typeof categorySchema>;
 
@@ -163,7 +164,7 @@ const AddCategoryView = () => {
   const isAwaitingExistingCategory = isEditing && isLoadingCategory;
 
   if (isAwaitingExistingCategory) {
-    return <div>Cargando</div>;
+    return <Loader />;
   }
 
   return (

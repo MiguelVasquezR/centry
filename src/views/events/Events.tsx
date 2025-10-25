@@ -14,6 +14,7 @@ import GeneralModal from "@/src/component/GeneralModal";
 import { useEffect, useMemo, useState } from "react";
 import { EventClickArg } from "@fullcalendar/core/index.js";
 import CardEventType from "@/src/component/CardEventType";
+import Loader from "@/src/component/Loader";
 
 const DEFAULT_EVENT_COLOR = "#6B7280";
 
@@ -99,7 +100,7 @@ const Index = () => {
   });
 
   if (isLoadingEvents || isLoadingCategories) {
-    return <div>Cargando</div>;
+    return <Loader />;
   }
 
   return (

@@ -5,13 +5,14 @@ import { Book } from "lucide-react";
 import Link from "next/link";
 import CategoryCard from "@/src/component/CategoryCard";
 import type { Category } from "@/src/types/category";
+import Loader from "@/src/component/Loader";
 
 const AdminDashboard = () => {
   const { data: categoriesData, isLoading: isLoadingCategories } =
     useGetCategoriesQuery(undefined);
 
   if (isLoadingCategories) {
-    return <div>Cargando</div>;
+    return <Loader />;
   }
 
   return (

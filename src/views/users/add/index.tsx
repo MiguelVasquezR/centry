@@ -18,6 +18,7 @@ import type { User } from "@/src/types/user";
 import { userSchema } from "@/src/schemas/user";
 import z from "zod";
 import { uploadFileToCloudinary } from "@/src/utils/utils";
+import Loader from "@/src/component/Loader";
 
 type UserFormData = z.infer<typeof userSchema>;
 
@@ -173,7 +174,7 @@ const AddUserView = () => {
   };
 
   if (isLoadingUserId) {
-    return <div>Cargando</div>;
+    return <Loader />;
   }
 
   return (

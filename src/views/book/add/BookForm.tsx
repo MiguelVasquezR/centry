@@ -15,6 +15,7 @@ import {
 import type { Book } from "@/src/types/book";
 import toast from "react-hot-toast";
 import BookShelfMap, { DEFAULT_SHELVES } from "@/src/component/BookShelfMap";
+import Loader from "@/src/component/Loader";
 
 const SHELVES = DEFAULT_SHELVES;
 const SHELF_LABELS: Record<string, string> = SHELVES.reduce(
@@ -317,7 +318,7 @@ const BookForm = ({ bookId, mode = "add" }: BookFormProps) => {
 
   // Show loading state when fetching book data in edit mode
   if (mode === "edit" && isLoadingBook) {
-    return <div>Cargando</div>;
+    return <Loader />;
   }
 
   return (

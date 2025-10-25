@@ -7,6 +7,7 @@ import { Book } from "@/src/types/book";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import Loader from "@/src/component/Loader";
 
 const BookLibraryView = () => {
   const [page, setPage] = useState<number>(1);
@@ -39,7 +40,7 @@ const BookLibraryView = () => {
   };
 
   if (isLoadingBooks || isLoadingCurrentUser) {
-    return <div>Cargando</div>;
+    return <Loader />;
   }
 
   return (

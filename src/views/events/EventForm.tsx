@@ -10,6 +10,7 @@ import { useGetCategoriesQuery } from "@/src/redux/store/api/category";
 import { useCreateEventMutation } from "@/src/redux/store/api/eventApi";
 import { EventFormValues } from "@/src/types/event";
 import toast from "react-hot-toast";
+import Loader from "@/src/component/Loader";
 import type { Category } from "@/src/types/category";
 
 const fallbackCategories: Category[] = [
@@ -96,7 +97,7 @@ const EventForm = () => {
   };
 
   if (isLoadingCategory) {
-    return <div>Cargando</div>;
+    return <Loader />;
   }
 
   return (

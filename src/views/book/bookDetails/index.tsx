@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useLazyGetBookByIdQuery } from "../../../redux/store/api/booksApi";
 import { useFetchPostsByBookQuery } from "../../../redux/store/api/postsApi";
 import BookShelfMap, { DEFAULT_SHELVES } from "@/src/component/BookShelfMap";
+import Loader from "@/src/component/Loader";
 import { Book } from "@/src/types/book";
 import type { Post } from "@/src/types/post";
 import Image from "next/image";
@@ -67,7 +68,7 @@ const BookDetailsView = () => {
     normalizedLocation.col >= 0;
 
   if (isLoadingBook || isLoadingComments || isFetchingComments) {
-    return <div>Cargando</div>;
+    return <Loader />;
   }
 
   return (

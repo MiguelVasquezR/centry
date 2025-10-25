@@ -6,6 +6,7 @@ import { useLazyFetchMoviesQuery } from "@/src/redux/store/api/moviesApi";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import Loader from "@/src/component/Loader";
 
 const MoviesLibraryView = () => {
   const [page, setPage] = useState<number>(1);
@@ -48,7 +49,7 @@ const MoviesLibraryView = () => {
   });
 
   if (isLoadingMovies) {
-    return <div>Cargando</div>;
+    return <Loader />;
   }
 
   return (

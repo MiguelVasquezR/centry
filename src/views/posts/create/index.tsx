@@ -20,6 +20,7 @@ import TipTapEditor from "../../../component/TipTapEditor";
 import Select, { StylesConfig } from "react-select";
 import { useCreatePostMutation } from "../../../redux/store/api/postsApi";
 import { useGetBooksQuery } from "../../../redux/store/api/booksApi";
+import Loader from "@/src/component/Loader";
 
 // Zod schema for post validation
 const postSchema = z.object({
@@ -317,7 +318,7 @@ const CreatePostView = () => {
   };
 
   if (isLoadingBooks) {
-    return <div>Cargando</div>;
+    return <Loader />;
   }
 
   return (

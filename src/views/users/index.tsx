@@ -11,6 +11,7 @@ import { EllipsisVertical } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
+import Loader from "@/src/component/Loader";
 
 const Users = () => {
   const { data: users, isLoading: isLoadingUsers } =
@@ -108,7 +109,7 @@ const Users = () => {
   };
 
   if (isLoadingUsers || isLoadingCurrentUser) {
-    return <div>Cargando</div>;
+    return <Loader />;
   }
 
   return (

@@ -18,6 +18,7 @@ import {
 } from "@/src/redux/store/api/usersApi";
 import type { User } from "@/src/types/user";
 import clsx from "clsx";
+import Loader from "@/src/component/Loader";
 
 const fallbackAvatar =
   "https://res.cloudinary.com/dvt4vznxn/image/upload/v1758764097/138617_ar3v0q.jpg";
@@ -57,17 +58,7 @@ const UserProfile = () => {
   const isBusy = isLoading || isFetching;
 
   if (isBusy && !user) {
-    return (
-      <div className="container">
-        <br />
-        <div className="card p-5">
-          <p className="title is-5 has-text-grey">Cargando perfil…</p>
-          <p className="subtitle is-6 has-text-grey">
-            Estamos preparando la información de la persona.
-          </p>
-        </div>
-      </div>
-    );
+    return <Loader />;
   }
 
   if (isError) {
@@ -98,7 +89,7 @@ const UserProfile = () => {
   const { name, imageUrl, email, biography, tuition, topics, isActive } = user;
 
   if (isLoadingCurrentUser) {
-    return <div>Cargando</div>;
+    return <Loader />;
   }
 
   return (

@@ -9,6 +9,8 @@ import CardPost from "../../../component/CardPost";
 import type { PostListItem } from "@/src/types/postList";
 import { useGetEventsQuery } from "@/src/redux/store/api/eventApi";
 import { EventType } from "@/src/types/event";
+import Loader from "@/src/component/Loader";
+import { useGetCurrentUserQuery } from "@/src/redux/store/api/usersApi";
 
 const Updates = () => {
   const getCreatedAtMillis = (value: PostListItem["createdAt"]) => {
@@ -48,8 +50,7 @@ const Updates = () => {
       const seconds =
         typeof timestamp.seconds === "number" ? timestamp.seconds : 0;
       const nanos =
-        "nanoseconds" in timestamp &&
-        typeof timestamp.nanoseconds === "number"
+        "nanoseconds" in timestamp && typeof timestamp.nanoseconds === "number"
           ? timestamp.nanoseconds
           : 0;
       return seconds * 1000 + Math.round(nanos / 1_000_000);
@@ -86,6 +87,10 @@ const Updates = () => {
   const [greeting, setGreeting] = useState("");
   const [todayLabel, setTodayLabel] = useState("");
 
+  const { data: currentUser, isLoading: isLoadingCurrentUser } =
+    useGetCurrentUserQuery(undefined);
+  const { name } = currentUser || {};
+
   useEffect(() => {
     setGreeting(getGreating());
     setTodayLabel(
@@ -93,8 +98,8 @@ const Updates = () => {
     );
   }, []);
 
-  if (isPostsLoading || isLoadingEvents) {
-    return <div>Cargando</div>;
+  if (isPostsLoading || isLoadingEvents || isLoadingCurrentUser) {
+    return <Loader />;
   }
 
   return (
@@ -103,7 +108,7 @@ const Updates = () => {
       <div className="is-flex is-flex-direction-row is-justify-content-space-between is-align-items-center">
         <div className="is-flex is-flex-direction-column">
           <p className="is-size-4 has-text-weight-bold">
-            {greeting ? `${greeting}, Miguel!` : "Hola, Miguel!"}
+            {greeting ? `${greeting}, ${name}!` : `Hola, ${name}!`}
           </p>
           <p className="is-size-6 has-text-grey">{todayLabel}</p>
         </div>
