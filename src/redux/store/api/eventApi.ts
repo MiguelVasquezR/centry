@@ -43,6 +43,7 @@ export const eventApi = apiSlice.injectEndpoints({
         url: "/event/get",
         method: "GET",
       }),
+      providesTags: ["event"],
       transformResponse: (response: { data: EventType[] }) => {
         return response.data;
       },
