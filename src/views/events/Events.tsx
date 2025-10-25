@@ -98,7 +98,7 @@ const Index = () => {
     };
   });
 
-  if (isLoadingEvents) {
+  if (isLoadingEvents || isLoadingCategories) {
     return <div>Cargando</div>;
   }
 

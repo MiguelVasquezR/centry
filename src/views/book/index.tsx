@@ -16,7 +16,10 @@ const BookLibraryView = () => {
     useGetCurrentUserQuery(undefined);
   const { rol = "student" } = currentUser || {};
 
-  const [getMore, { data: dataBooks, isLoading: booksIsLoading, error }] =
+  const [
+    getMore,
+    { data: dataBooks, isLoading: isLoadingBooks, error },
+  ] =
     useLazyFetchBooksQuery();
 
   const { books, totalPages } = dataBooks || {};
@@ -35,8 +38,8 @@ const BookLibraryView = () => {
     setPage(newPage);
   };
 
-  if (booksIsLoading || isLoadingCurrentUser) {
-    return <div className="loading">Loading</div>;
+  if (isLoadingBooks || isLoadingCurrentUser) {
+    return <div>Cargando</div>;
   }
 
   return (

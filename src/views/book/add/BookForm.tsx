@@ -317,17 +317,7 @@ const BookForm = ({ bookId, mode = "add" }: BookFormProps) => {
 
   // Show loading state when fetching book data in edit mode
   if (mode === "edit" && isLoadingBook) {
-    return (
-      <div className="container">
-        <div className="has-text-centered">
-          <div
-            className="is-loading"
-            style={{ width: "50px", height: "50px", margin: "50px auto" }}
-          ></div>
-          <p>Cargando datos del libro...</p>
-        </div>
-      </div>
-    );
+    return <div>Cargando</div>;
   }
 
   return (

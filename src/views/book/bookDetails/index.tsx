@@ -66,8 +66,8 @@ const BookDetailsView = () => {
     normalizedLocation.row >= 0 &&
     normalizedLocation.col >= 0;
 
-  if (isLoadingBook) {
-    return <div className="loading">Loading</div>;
+  if (isLoadingBook || isLoadingComments || isFetchingComments) {
+    return <div>Cargando</div>;
   }
 
   return (

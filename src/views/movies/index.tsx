@@ -13,7 +13,10 @@ const MoviesLibraryView = () => {
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [selectedGenre, setSelectedGenre] = useState<string>("");
 
-  const [getMore, { data: dataMovies, isLoading: moviesIsLoading, error }] =
+  const [
+    getMore,
+    { data: dataMovies, isLoading: isLoadingMovies, error },
+  ] =
     useLazyFetchMoviesQuery();
 
   const { movies = [], totalPages = 0 } = dataMovies || {};
@@ -44,8 +47,8 @@ const MoviesLibraryView = () => {
     return matchesSearch && matchesGenre;
   });
 
-  if (moviesIsLoading) {
-    return <div className="loading">Loading</div>;
+  if (isLoadingMovies) {
+    return <div>Cargando</div>;
   }
 
   return (

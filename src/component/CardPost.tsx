@@ -12,6 +12,7 @@ import { useEffect, useRef, useState } from "react";
 import { useUpdatePostMutation } from "../redux/store/api/postsApi";
 import { useLazyGetUserByIdQuery } from "../redux/store/api/usersApi";
 import { User } from "../types/user";
+import CardPostSkeleton from "./CardPostSkeleton";
 
 const CardPost = ({ post }: { post: PostListItem }) => {
   const coverImage = post.imageUrl?.[0] || fallbackCover;
@@ -37,15 +38,17 @@ const CardPost = ({ post }: { post: PostListItem }) => {
   const currenId = localStorage.getItem("userId") ?? "";
   const changeColor = post.reactions.find((v: string) => v === currenId);
 
-  const [getUser, { data: author, isLoading: isLoadingAuthor }] =
+  const [getUser, { data: author, isLoading: isLoadingAuthor, isFetching: isFetchingAuthor }] =
     useLazyGetUserByIdQuery();
   const [authorPost, setAuthorPost] = useState<User>();
+  const hasRequestedAuthorRef = useRef(false);
 
   useEffect(() => {
-    if (post) {
+    if (post && !hasRequestedAuthorRef.current) {
       getUser(post.authorId);
+      hasRequestedAuthorRef.current = true;
     }
-  }, [post]);
+  }, [post, getUser]);
 
   useEffect(() => {
     if (author?.user) {
@@ -101,6 +104,13 @@ const CardPost = ({ post }: { post: PostListItem }) => {
     };
   }, []);
 
+  const isAuthorLoading =
+    !authorPost && (isLoadingAuthor || isFetchingAuthor || !hasRequestedAuthorRef.current);
+
+  if (isAuthorLoading) {
+    return <CardPostSkeleton />;
+  }
+
   return (
     <article className="card p-5 mb-4 is-clickable">
       {runGlobes && (
@@ -123,14 +133,26 @@ const CardPost = ({ post }: { post: PostListItem }) => {
             }}
           >
             {authorPost?.imageUrl ? (
-              <img src={authorPost?.imageUrl} alt="" />
+              <Image
+                src={authorPost.imageUrl}
+                alt={authorPost?.name ?? "Avatar"}
+                width={48}
+                height={48}
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                  borderRadius: "16px",
+                }}
+              />
             ) : (
               authorInitial
             )}
           </div>
           <div>
             <p className="is-size-6 has-text-weight-semibold">
-              {authorPost?.name} | {authorPost?.email}
+              {authorPost?.name ?? "Autor desconocido"}
+              {authorPost?.email ? ` | ${authorPost.email}` : ""}
             </p>
             <div className="is-flex is-align-items-center is-gap-1">
               <span className="is-size-7 has-text-grey">
