@@ -16,3 +16,9 @@ interface EventType {
 }
 
 type EventFormValues = z.infer<typeof eventSchema>;
+
+interface EventCardType {
+  title: string;
+  type: string;
+  color: string;
+}

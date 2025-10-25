@@ -28,10 +28,13 @@ const CATEGORY_TYPE_OPTIONS: Array<{
   { value: "book", label: "Libro" },
 ];
 
+const DEFAULT_EVENT_COLOR = "#9f1239";
+
 const DEFAULT_FORM_VALUES: CategoryFormValues = {
   title: "",
   type: "event",
   description: "",
+  color: DEFAULT_EVENT_COLOR,
 };
 
 const AddCategoryView = () => {
@@ -50,6 +53,7 @@ const AddCategoryView = () => {
     formState: { errors, isSubmitting },
     watch,
     reset,
+    setValue,
   } = useForm<CategoryFormValues>({
     resolver: zodResolver(categorySchema),
     defaultValues: DEFAULT_FORM_VALUES,
@@ -75,12 +79,30 @@ const AddCategoryView = () => {
       description: categoryData.description,
       title: categoryData.title,
       type: categoryData.type,
+      color:
+        categoryData.type === "event"
+          ? categoryData.color ?? DEFAULT_EVENT_COLOR
+          : "",
     });
   }, [categoryData, reset]);
 
   const watchedTitle = watch("title");
   const watchedType = watch("type");
   const watchedDescription = watch("description");
+  const watchedColor = watch("color");
+
+  useEffect(() => {
+    if (watchedType === "event") {
+      if (!watchedColor) {
+        setValue("color", DEFAULT_EVENT_COLOR);
+      }
+      return;
+    }
+
+    if (watchedColor) {
+      setValue("color", "");
+    }
+  }, [watchedType, watchedColor, setValue]);
 
   const descriptionStats = useMemo(() => {
     const trimmed = watchedDescription?.trim() ?? "";
@@ -101,21 +123,30 @@ const AddCategoryView = () => {
       ),
     ];
 
+    if (watchedType === "event") {
+      checks.push(Boolean(watchedColor));
+    }
+
     const completed = checks.filter(Boolean).length;
     return Math.round((completed / checks.length) * 100);
-  }, [watchedDescription, watchedTitle, watchedType]);
+  }, [watchedDescription, watchedTitle, watchedType, watchedColor]);
 
   const handleFormSubmit = handleSubmit(async (values) => {
     try {
+      const payload =
+        values.type === "event"
+          ? values
+          : { ...values, color: undefined };
+
       if (isEditing) {
         const event = {
-          ...values,
+          ...payload,
           id: categoryId,
         };
         await updateCategory(event);
         toast.success("Categoría editada correctamente");
       } else {
-        await createCategory(values).unwrap();
+        await createCategory(payload).unwrap();
         toast.success("Categoría creada correctamente");
       }
       reset();
@@ -201,10 +232,37 @@ const AddCategoryView = () => {
                 )}
               </div>
 
+            {watchedType === "event" && (
               <div className="field">
-                <label htmlFor="description" className="label">
-                  Descripción *
+                <label htmlFor="color" className="label">
+                  Color distintivo *
                 </label>
+                <div className="control is-flex is-align-items-center is-gap-3">
+                  <input
+                    id="color"
+                    type="color"
+                    className={errors.color ? "is-danger" : ""}
+                    {...register("color")}
+                    style={{ width: "3rem", height: "3rem", padding: 0 }}
+                  />
+                  <span className="is-size-6 has-text-grey">
+                    {watchedColor?.toUpperCase()}
+                  </span>
+                </div>
+                <p className="help has-text-grey">
+                  Este color se usará para identificar los eventos asociados en
+                  el calendario.
+                </p>
+                {errors.color && (
+                  <p className="help is-danger">{errors.color.message}</p>
+                )}
+              </div>
+            )}
+
+            <div className="field">
+              <label htmlFor="description" className="label">
+                Descripción *
+              </label>
                 <div className="control">
                   <textarea
                     id="description"
@@ -293,6 +351,15 @@ const AddCategoryView = () => {
                     />
                     <span>Tipo seleccionado</span>
                   </li>
+                  {watchedType === "event" && (
+                    <li className="is-flex is-align-items-center is-gap-2 mb-1">
+                      <ListChecks
+                        size={16}
+                        className={watchedColor ? "has-text-success" : ""}
+                      />
+                      <span>Color seleccionado</span>
+                    </li>
+                  )}
                   <li className="is-flex is-align-items-center is-gap-2">
                     <ListChecks
                       size={16}

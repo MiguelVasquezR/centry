@@ -294,3 +294,23 @@
     font-size: 0.8rem;
   }
 }
+
+.fc-col-header-cell-cushion,
+.fc-daygrid-day-number {
+  color: black;
+}
+
+.fc-button {
+  background-color: hsl(
+    var(--bulma-primary-h),
+    var(--bulma-primary-s),
+    var(--bulma-primary-l)
+  ) !important;
+  border: none !important;
+}
+
+.fc-event-main-frame {
+  background-color: transparent !important;
+  border: none !important;
+}
+

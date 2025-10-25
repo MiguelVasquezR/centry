@@ -5,4 +5,5 @@ export interface Category {
   title: string;
   type: CategoryType;
   description: string;
+  color?: string;
 }

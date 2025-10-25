@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -17,18 +18,21 @@ const fallbackCategories: Category[] = [
     title: "Tecnología",
     type: "event",
     description: "Artículos y novedades sobre software, hardware y desarrollo.",
+    color: "#0ea5e9",
   },
   {
     id: "2",
     title: "Educación",
     type: "event",
     description: "Recursos, técnicas y tendencias educativas.",
+    color: "#f59e0b",
   },
   {
     id: "3",
     title: "Salud",
     type: "event",
     description: "Consejos sobre bienestar físico y mental.",
+    color: "#10b981",
   },
 ];
 
@@ -40,23 +44,33 @@ const EventForm = () => {
     isLoading: isLoadingCategory,
   } = useGetCategoriesQuery(undefined);
 
-  const categoryOptions = categoriesData.length
-    ? categoriesData
+  const eventCategories = (categoriesData ?? []).filter(
+    (category: Category) => category.type === "event"
+  );
+
+  const categoryOptions = eventCategories.length
+    ? eventCategories
     : fallbackCategories;
 
   const [createEvent] = useCreateEventMutation();
+
+  const defaultCategoryValue =
+    categoryOptions.length > 0
+      ? categoryOptions[0].id ?? categoryOptions[0].title
+      : "";
 
   const {
     control,
     register,
     handleSubmit,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<EventFormValues>({
     resolver: zodResolver(eventSchema),
     defaultValues: {
       title: "",
       description: "",
-      type: "",
+      type: defaultCategoryValue,
       date: DateTime.now().toISODate(),
       time: DateTime.now().toFormat("HH:mm"),
       duration: "60",
@@ -67,6 +81,12 @@ const EventForm = () => {
       ability: 20,
     },
   });
+
+  useEffect(() => {
+    if (defaultCategoryValue) {
+      setValue("type", defaultCategoryValue);
+    }
+  }, [defaultCategoryValue, setValue]);
 
   const onSubmit = (data: EventFormValues) => {
     createEvent(data);
@@ -124,15 +144,19 @@ const EventForm = () => {
 
               <div className="columns">
                 <div className="column is-6">
-                  <div className="field">
-                    <label htmlFor="type" className="label">
-                      Tipo de evento *
-                    </label>
-                    <div
-                      className={`control ${errors.type ? "is-danger" : ""}`}
+              <div className="field">
+                <label htmlFor="type" className="label">
+                  Tipo de evento *
+                </label>
+                <div
+                  className={`control ${errors.type ? "is-danger" : ""}`}
+                >
+                  <div className="select is-fullwidth">
+                    <select
+                      id="type"
+                      defaultValue={defaultCategoryValue}
+                      {...register("type")}
                     >
-                      <div className="select is-fullwidth">
-                        <select id="type" {...register("type")}>
                           {categoryOptions.map((option: Category) => (
                             <option
                               key={option.id ?? option.title}

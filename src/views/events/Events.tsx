@@ -7,15 +7,75 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import esLocale from "@fullcalendar/core/locales/es";
 
 import { useGetEventsQuery } from "@/src/redux/store/api/eventApi";
-import { EventFormValues, EventType } from "@/src/types/event";
+import { useGetCategoriesQuery } from "@/src/redux/store/api/category";
+import { EventCardType, EventType } from "@/src/types/event";
+import type { Category } from "@/src/types/category";
 import GeneralModal from "@/src/component/GeneralModal";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { EventClickArg } from "@fullcalendar/core/index.js";
+import CardEventType from "@/src/component/CardEventType";
+
+const DEFAULT_EVENT_COLOR = "#6B7280";
 
 const Index = () => {
   const [selectedId, setSelectedId] = useState<string>("");
   const [selectedEvent, setSelectedEvent] = useState<EventType>();
   const { data: eventsData, isLoading: isLoadingEvents } = useGetEventsQuery();
+  const {
+    data: categoriesData = [],
+    isLoading: isLoadingCategories,
+  } = useGetCategoriesQuery(undefined);
+
+  const eventCategories = useMemo(
+    () =>
+      (categoriesData ?? []).filter(
+        (category: Category) => category.type === "event"
+      ),
+    [categoriesData]
+  );
+
+  const categoryColorLookup = useMemo(() => {
+    const map = new Map<string, string>();
+
+    eventCategories.forEach((category) => {
+      const color = category.color ?? DEFAULT_EVENT_COLOR;
+
+      if (category.id) {
+        map.set(category.id, color);
+      }
+
+      if (category.title) {
+        map.set(category.title.toLowerCase(), color);
+      }
+    });
+
+    return map;
+  }, [eventCategories]);
+
+  const eventCategoryCards = useMemo<EventCardType[]>(
+    () =>
+      eventCategories.map((category) => ({
+        title: category.title,
+        type: category.id ?? category.title,
+        color: category.color ?? DEFAULT_EVENT_COLOR,
+      })),
+    [eventCategories]
+  );
+
+  const getColorForEventType = (type: string | undefined): string => {
+    if (!type) {
+      return DEFAULT_EVENT_COLOR;
+    }
+
+    const directMatch = categoryColorLookup.get(type);
+    if (directMatch) {
+      return directMatch;
+    }
+
+    return (
+      categoryColorLookup.get(type.toLowerCase()) ?? DEFAULT_EVENT_COLOR
+    );
+  };
 
   useEffect(() => {
     const find = eventsData?.find((event) => event.id === selectedId);
@@ -25,7 +85,7 @@ const Index = () => {
     }
   }, [eventsData, selectedId]);
 
-  const upcomingEvents = (eventsData ?? []).map((event: EventFormValues) => {
+  const upcomingEvents = (eventsData ?? []).map((event: EventType) => {
     const timePad = event.time ? `T${event.time}` : "T00:00";
     return {
       title: event.title,
@@ -33,26 +93,10 @@ const Index = () => {
       start: `${event.date}${timePad}`,
       location: event.location,
       description: event.description,
-      color: "#9f1239",
+      color: getColorForEventType(event.type),
       id: event.id,
     };
   });
-
-  const CardEventType = () => {
-    return (
-      <div
-        className="box"
-        style={{
-          border: 0,
-          borderLeft: 3,
-          borderColor: "#000",
-          borderStyle: "solid",
-        }}
-      >
-        <p className="is-size-6">Club lectura</p>
-      </div>
-    );
-  };
 
   if (isLoadingEvents) {
     return <div>Cargando</div>;
@@ -89,7 +133,7 @@ const Index = () => {
                   locales={[esLocale]}
                   locale="es"
                   initialView="dayGridMonth"
-                  height="auto"
+                  height="700px"
                   firstDay={1}
                   dayMaxEventRows={3}
                   eventDisplay="block"
@@ -118,10 +162,18 @@ const Index = () => {
           </div>
 
           <div className="column is-3">
-            <CardEventType />
-            <CardEventType />
-            <CardEventType />
-            <CardEventType />
+            {isLoadingCategories ? (
+              <p>Cargando categorías...</p>
+            ) : eventCategoryCards.length ? (
+              eventCategoryCards.map((eventCategory) => (
+                <CardEventType
+                  key={eventCategory.type}
+                  event={eventCategory}
+                />
+              ))
+            ) : (
+              <p>No hay categorías de eventos disponibles.</p>
+            )}
           </div>
         </div>
       </div>
@@ -133,6 +185,7 @@ const Index = () => {
         }}
         title={selectedEvent?.title}
         description={selectedEvent?.description}
+        showFooter={false}
       >
         <div>{selectedEvent?.date.toString() ?? ""}</div>
       </GeneralModal>
