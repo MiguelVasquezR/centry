@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useState, useEffect, ChangeEvent } from "react";
+import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useRouter } from "next/navigation";
@@ -14,6 +14,16 @@ import {
 } from "@/src/redux/store/api/booksApi";
 import type { Book } from "@/src/types/book";
 import toast from "react-hot-toast";
+import BookShelfMap, { DEFAULT_SHELVES } from "@/src/component/BookShelfMap";
+
+const SHELVES = DEFAULT_SHELVES;
+const SHELF_LABELS: Record<string, string> = SHELVES.reduce(
+  (acc, shelf) => {
+    acc[shelf.id] = shelf.label;
+    return acc;
+  },
+  {} as Record<string, string>
+);
 
 // Zod schema for book validation
 const bookSchema = z.object({
@@ -27,9 +37,19 @@ const bookSchema = z.object({
   numPag: z.string().min(1, "El número de páginas es requerido"),
   tipo: z.string().min(1, "El tipo de libro es requerido"),
   ubicacion: z.object({
-    repisa: z.string().min(1, "La repisa es requerida"),
-    col: z.number().min(1, "La columna debe ser mayor a 0"),
-    row: z.number().min(1, "La fila debe ser mayor a 0"),
+    repisa: z.string().min(1, "Selecciona una repisa"),
+    col: z
+      .number({
+        invalid_type_error: "Selecciona una columna válida",
+      })
+      .int("Selecciona una columna válida")
+      .min(0, "Selecciona una columna válida"),
+    row: z
+      .number({
+        invalid_type_error: "Selecciona una fila válida",
+      })
+      .int("Selecciona una fila válida")
+      .min(0, "Selecciona una fila válida"),
   }),
 });
 
@@ -66,9 +86,11 @@ const BookForm = ({ bookId, mode = "add" }: BookFormProps) => {
     formState: { errors },
     reset,
     watch,
+    control,
+    setValue,
   } = useForm<BookFormData>({
     resolver: zodResolver(bookSchema),
-    defaultValues: {
+  defaultValues: {
       titulo: "",
       author: "",
       descripcion: "",
@@ -78,8 +100,8 @@ const BookForm = ({ bookId, mode = "add" }: BookFormProps) => {
       tipo: "",
       ubicacion: {
         repisa: "",
-        col: 1,
-        row: 1,
+        col: 0,
+        row: 0,
       },
     },
   });
@@ -97,8 +119,12 @@ const BookForm = ({ bookId, mode = "add" }: BookFormProps) => {
         tipo: book.tipo || "",
         ubicacion: {
           repisa: book.ubicacion?.repisa || "",
-          col: book.ubicacion?.col || 1,
-          row: book.ubicacion?.row || 1,
+          col: Number.isFinite(Number(book.ubicacion?.col))
+            ? Number(book.ubicacion?.col)
+            : 0,
+          row: Number.isFinite(Number(book.ubicacion?.row))
+            ? Number(book.ubicacion?.row)
+            : 0,
         },
       });
       setImagePreview(book.imagen || "");
@@ -112,9 +138,15 @@ const BookForm = ({ bookId, mode = "add" }: BookFormProps) => {
   const watchedYear = watch("anioPublicacion");
   const watchedPages = watch("numPag");
   const watchedType = watch("tipo");
-  const watchedShelf = watch("ubicacion.repisa");
-  const watchedCol = watch("ubicacion.col");
-  const watchedRow = watch("ubicacion.row");
+  const watchedLocation = watch("ubicacion");
+
+  const watchedShelf = watchedLocation?.repisa ?? "";
+  const watchedCol =
+    typeof watchedLocation?.col === "number" ? watchedLocation.col : null;
+  const watchedRow =
+    typeof watchedLocation?.row === "number" ? watchedLocation.row : null;
+
+  const selectedShelfId = watchedShelf;
 
   const descriptionValue = watchedDescripcion || "";
   const descriptionWordCount = descriptionValue
@@ -131,6 +163,43 @@ const BookForm = ({ bookId, mode = "add" }: BookFormProps) => {
     Boolean(watchedShelf),
     Boolean(imagePreview),
   ];
+
+  const handleShelfChange = (event: ChangeEvent<HTMLSelectElement>) => {
+    const newShelfId = event.target.value;
+
+    if (!newShelfId) {
+      setValue(
+        "ubicacion",
+        {
+          repisa: "",
+          row: 0,
+          col: 0,
+        },
+        { shouldDirty: true, shouldTouch: true }
+      );
+      return;
+    }
+
+    const shelfDefinition = SHELVES.find((shelf) => shelf.id === newShelfId);
+    const currentRow =
+      typeof watchedRow === "number" && shelfDefinition && watchedRow < shelfDefinition.rows
+        ? watchedRow
+        : 0;
+    const currentCol =
+      typeof watchedCol === "number" && shelfDefinition && watchedCol < shelfDefinition.cols
+        ? watchedCol
+        : 0;
+
+    setValue(
+      "ubicacion",
+      {
+        repisa: newShelfId,
+        row: currentRow,
+        col: currentCol,
+      },
+      { shouldDirty: true, shouldTouch: true }
+    );
+  };
 
   const completion =
     completionChecklist.length > 0
@@ -516,73 +585,98 @@ const BookForm = ({ bookId, mode = "add" }: BookFormProps) => {
                     Facilita la entrega presencial
                   </span>
                 </div>
-                <div className="columns is-variable is-4">
-                  <div className="column is-4">
-                    <div className="field">
-                      <label className="label">Repisa *</label>
-                      <div className="control">
-                        <div className="select is-fullwidth">
-                          <select
-                            className={errors.ubicacion?.repisa ? "is-danger" : ""}
-                            {...register("ubicacion.repisa")}
-                          >
-                            <option value="">Seleccionar repisa</option>
-                            <option value="Lateral">Lateral</option>
-                            <option value="Central">Central</option>
-                            <option value="Archivo">Archivo</option>
-                          </select>
-                        </div>
-                      </div>
-                      {errors.ubicacion?.repisa && (
-                        <p className="help is-danger">
-                          {errors.ubicacion.repisa.message}
-                        </p>
-                      )}
+
+                <div className="field">
+                  <label className="label">Repisa *</label>
+                  <div className="control">
+                    <div className="select is-fullwidth">
+                      <select
+                        className={errors.ubicacion?.repisa ? "is-danger" : ""}
+                        value={selectedShelfId}
+                        onChange={handleShelfChange}
+                      >
+                        <option value="">Selecciona una repisa</option>
+                        {SHELVES.map((shelf) => (
+                          <option key={shelf.id} value={shelf.id}>
+                            {shelf.label}
+                          </option>
+                        ))}
+                      </select>
                     </div>
                   </div>
-                  <div className="column is-4">
-                    <div className="field">
-                      <label className="label">Columna *</label>
-                      <div className="control">
-                        <input
-                          className={`input ${
-                            errors.ubicacion?.col ? "is-danger" : ""
-                          }`}
-                          type="number"
-                          min="1"
-                          placeholder="Ej. 3"
-                          {...register("ubicacion.col", { valueAsNumber: true })}
-                        />
-                      </div>
-                      {errors.ubicacion?.col && (
-                        <p className="help is-danger">
-                          {errors.ubicacion.col.message}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                  <div className="column is-4">
-                    <div className="field">
-                      <label className="label">Fila *</label>
-                      <div className="control">
-                        <input
-                          className={`input ${
-                            errors.ubicacion?.row ? "is-danger" : ""
-                          }`}
-                          type="number"
-                          min="1"
-                          placeholder="Ej. 2"
-                          {...register("ubicacion.row", { valueAsNumber: true })}
-                        />
-                      </div>
-                      {errors.ubicacion?.row && (
-                        <p className="help is-danger">
-                          {errors.ubicacion.row.message}
-                        </p>
-                      )}
-                    </div>
-                  </div>
+                  {errors.ubicacion?.repisa && (
+                    <p className="help is-danger">
+                      {errors.ubicacion.repisa.message}
+                    </p>
+                  )}
                 </div>
+
+                {selectedShelfId ? (
+                  <Controller
+                    control={control}
+                    name="ubicacion"
+                    render={({ field }) => {
+                      const shelfDefinition = SHELVES.find(
+                        (shelf) => shelf.id === selectedShelfId
+                      );
+                      const fieldValue =
+                        field.value && field.value.repisa === selectedShelfId
+                          ? field.value
+                          : {
+                              repisa: selectedShelfId,
+                              row: 0,
+                              col: 0,
+                            };
+
+                      return (
+                        <BookShelfMap
+                          mode="select"
+                          shelves={SHELVES}
+                          activeShelfId={selectedShelfId}
+                          value={fieldValue}
+                          onChange={(location) => {
+                            const normalized = {
+                              repisa: selectedShelfId,
+                              row:
+                                shelfDefinition &&
+                                location.row < shelfDefinition.rows
+                                  ? location.row
+                                  : 0,
+                              col:
+                                shelfDefinition &&
+                                location.col < shelfDefinition.cols
+                                  ? location.col
+                                  : 0,
+                            };
+                            field.onChange(normalized);
+                          }}
+                        />
+                      );
+                    }}
+                  />
+                ) : (
+                  <div className="notification is-light is-size-7">
+                    Selecciona una repisa para mostrar la cuadrícula y elegir
+                    una posición.
+                  </div>
+                )}
+
+                {errors.ubicacion?.col && (
+                  <p className="help is-danger mt-3">
+                    {errors.ubicacion.col.message}
+                  </p>
+                )}
+                {errors.ubicacion?.row && (
+                  <p className="help is-danger">
+                    {errors.ubicacion.row.message}
+                  </p>
+                )}
+
+                <p className="help has-text-grey mt-3">
+                  {selectedShelfId && watchedCol !== null && watchedRow !== null
+                    ? `Seleccionado: ${SHELF_LABELS[selectedShelfId] ?? selectedShelfId} · fila ${watchedRow} · columna ${watchedCol}`
+                    : "Selecciona cualquier recuadro. Las coordenadas comienzan en 0 (fila, columna)."}
+                </p>
               </div>
             </div>
 
@@ -692,8 +786,8 @@ const BookForm = ({ bookId, mode = "add" }: BookFormProps) => {
                     </p>
                     <p className="is-size-7">
                       <strong>Ubicación:</strong>{" "}
-                      {watchedShelf
-                        ? `${watchedShelf}, Col. ${watchedCol}, Fila ${watchedRow}`
+                      {watchedShelf && watchedCol !== null && watchedRow !== null
+                        ? `${SHELF_LABELS[watchedShelf] ?? watchedShelf} · fila ${watchedRow} · columna ${watchedCol}`
                         : "Sin asignar"}
                     </p>
                   </div>

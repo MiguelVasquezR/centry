@@ -5,10 +5,17 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useLazyGetBookByIdQuery } from "../../../redux/store/api/booksApi";
 import { useFetchPostsByBookQuery } from "../../../redux/store/api/postsApi";
+import BookShelfMap, { DEFAULT_SHELVES } from "@/src/component/BookShelfMap";
 import { Book } from "@/src/types/book";
 import type { Post } from "@/src/types/post";
 import Image from "next/image";
 import { ChevronLeft } from "lucide-react";
+
+const SHELVES = DEFAULT_SHELVES;
+const SHELF_LABELS: Record<string, string> = SHELVES.reduce((acc, shelf) => {
+  acc[shelf.id] = shelf.label;
+  return acc;
+}, {} as Record<string, string>);
 
 const BookDetailsView = () => {
   const [book, setBook] = useState<Book>();
@@ -41,6 +48,23 @@ const BookDetailsView = () => {
   useEffect(() => {
     setBook(dataBook);
   }, [dataBook]);
+
+  console.log(book?.ubicacion);
+
+  const normalizedLocation = book?.ubicacion
+    ? {
+        repisa: Number(book.ubicacion.respisa ?? 1),
+        row: Number(book.ubicacion.row ?? 0),
+        col: Number(book.ubicacion.col ?? 0),
+      }
+    : null;
+
+  const hasLocation =
+    normalizedLocation !== null &&
+    Number.isFinite(normalizedLocation.row) &&
+    Number.isFinite(normalizedLocation.col) &&
+    normalizedLocation.row >= 0 &&
+    normalizedLocation.col >= 0;
 
   if (isLoadingBook) {
     return <div className="loading">Loading</div>;
@@ -84,7 +108,9 @@ const BookDetailsView = () => {
                 className="button is-primary is-outlined"
                 onClick={() => {
                   if (book?.id) {
-                    router.push(`/posts/create?bookId=${encodeURIComponent(book.id)}`);
+                    router.push(
+                      `/posts/create?bookId=${encodeURIComponent(book.id)}`
+                    );
                   } else {
                     router.push("/posts/create");
                   }
@@ -99,7 +125,11 @@ const BookDetailsView = () => {
         <div className="column">
           <div className="is-flex is-justify-content-center is-flex-direction-column is-align-items-center is-gap-2">
             <Image
-              src={book?.imagen || book?.image ||"https://res.cloudinary.com/dvt4vznxn/image/upload/v1758764097/138617_ar3v0q.jpg"}
+              src={
+                book?.imagen ||
+                book?.image ||
+                "https://res.cloudinary.com/dvt4vznxn/image/upload/v1758764097/138617_ar3v0q.jpg"
+              }
               alt="imagen"
               height={132}
               width={132}
@@ -124,6 +154,24 @@ const BookDetailsView = () => {
             <p className="is-size-5 has-text-weight-bold">Ubicación</p>
             <br />
           </div>
+          {hasLocation && normalizedLocation ? (
+            <div className="is-flex is-flex-direction-column is-gap-3">
+              <p className="is-size-6 has-text-grey-dark">
+                {SHELF_LABELS[normalizedLocation.repisa] ??
+                  normalizedLocation.repisa}{" "}
+                · fila {normalizedLocation.row} · columna{" "}
+                {normalizedLocation.col}
+              </p>
+              <BookShelfMap
+                mode="view"
+                shelves={SHELVES}
+                activeShelfId={String(normalizedLocation.repisa)}
+                value={normalizedLocation}
+              />
+            </div>
+          ) : (
+            <p className="has-text-grey">Sin ubicación registrada.</p>
+          )}
         </div>
         <div className="column">
           <div>

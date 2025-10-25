@@ -13,6 +13,7 @@ export interface Book {
   ubicacion: {
     col: number;
     repisa: string;
+    respisa?:string;
     row: number;
   };
 }
