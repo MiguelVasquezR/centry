@@ -88,7 +88,7 @@ const PostDetailView = () => {
     if (post) {
       getUser(post.authorId);
     }
-  }, [post]);
+  }, [post, getUser]);
 
   useEffect(() => {
     if (author?.user) {
@@ -111,7 +111,7 @@ const PostDetailView = () => {
     };
 
     updatePost(updatedPost);
-  }, [post, author]);
+  }, [post, author, updatePost]);
 
   if (!postId) {
     return (

@@ -40,15 +40,11 @@ const bookSchema = z.object({
   ubicacion: z.object({
     repisa: z.string().min(1, "Selecciona una repisa"),
     col: z
-      .number({
-        invalid_type_error: "Selecciona una columna válida",
-      })
+      .number()
       .int("Selecciona una columna válida")
       .min(0, "Selecciona una columna válida"),
     row: z
-      .number({
-        invalid_type_error: "Selecciona una fila válida",
-      })
+      .number()
       .int("Selecciona una fila válida")
       .min(0, "Selecciona una fila válida"),
   }),
@@ -611,10 +607,10 @@ const BookForm = ({ bookId, mode = "add" }: BookFormProps) => {
                         (shelf) => shelf.id === selectedShelfId
                       );
                       const fieldValue =
-                        field.value && field.value.repisa === selectedShelfId
+                        field.value && Number(field.value.repisa) === Number(selectedShelfId)
                           ? field.value
                           : {
-                              repisa: selectedShelfId,
+                              repisa: Number(selectedShelfId),
                               row: 0,
                               col: 0,
                             };
@@ -624,10 +620,18 @@ const BookForm = ({ bookId, mode = "add" }: BookFormProps) => {
                           mode="select"
                           shelves={SHELVES}
                           activeShelfId={selectedShelfId}
-                          value={fieldValue}
+                          value={
+                            fieldValue
+                              ? {
+                                  repisa: Number(fieldValue.repisa),
+                                  row: fieldValue.row,
+                                  col: fieldValue.col,
+                                }
+                              : null
+                          }
                           onChange={(location) => {
                             const normalized = {
-                              repisa: selectedShelfId,
+                              repisa: Number(selectedShelfId),
                               row:
                                 shelfDefinition &&
                                 location.row < shelfDefinition.rows

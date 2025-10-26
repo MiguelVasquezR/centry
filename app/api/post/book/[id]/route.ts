@@ -2,20 +2,20 @@ import { NextRequest, NextResponse } from "next/server";
 import { getPostsByBook } from "@/src/firebase/actions";
 
 export async function GET(
-  _: NextRequest,
-  { params }: { params: { id: string } }
+  _request: NextRequest,
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const bookId = params?.id;
+    const { id } = await context.params;
 
-    if (!bookId) {
+    if (!id) {
       return NextResponse.json(
         { status: 400, message: "Book id is required" },
         { status: 400 }
       );
     }
 
-    const posts = await getPostsByBook(bookId);
+    const posts = await getPostsByBook(id);
 
     return NextResponse.json({
       status: 200,
