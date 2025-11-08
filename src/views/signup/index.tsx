@@ -10,15 +10,21 @@ import toast from "react-hot-toast";
 import { signUpWithEmail } from "@/src/firebase/auth";
 
 // Zod schema for signup validation
-const signupSchema = z.object({
-  displayName: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
-  email: z.string().email("Email inválido"),
-  password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres"),
-  confirmPassword: z.string(),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Las contraseñas no coinciden",
-  path: ["confirmPassword"],
-});
+const signupSchema = z
+  .object({
+    displayName: z
+      .string()
+      .min(2, "El nombre debe tener al menos 2 caracteres"),
+    email: z.string().email("Email inválido"),
+    password: z
+      .string()
+      .min(6, "La contraseña debe tener al menos 6 caracteres"),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Las contraseñas no coinciden",
+    path: ["confirmPassword"],
+  });
 
 type SignupFormData = z.infer<typeof signupSchema>;
 
@@ -45,14 +51,16 @@ const Signup = () => {
         data.password,
         data.displayName
       );
-      
+
       if (error) {
         toast.error("Error al crear la cuenta. Inténtalo de nuevo.");
         return;
       }
 
       if (user) {
-        toast.success("¡Cuenta creada exitosamente! Revisa tu email para verificar tu cuenta.");
+        toast.success(
+          "¡Cuenta creada exitosamente! Revisa tu email para verificar tu cuenta."
+        );
         router.push("/login");
       }
     } catch (error) {
@@ -65,6 +73,7 @@ const Signup = () => {
 
   return (
     <div className="signup-container">
+      <br />
       {/* Background with floating books animation */}
       <div className="floating-books">
         <div className="book book-1">📚</div>
@@ -83,7 +92,9 @@ const Signup = () => {
               <Library className="logo-icon" size={48} />
               <h1 className="logo-text">Letras Documental</h1>
             </div>
-            <p className="signup-subtitle">Crea tu cuenta y comienza tu biblioteca digital</p>
+            <p className="signup-subtitle">
+              Crea tu cuenta y comienza tu biblioteca digital
+            </p>
           </div>
 
           {/* Signup Form */}
@@ -100,7 +111,9 @@ const Signup = () => {
                 {...register("displayName")}
               />
               {errors.displayName && (
-                <span className="error-message">{errors.displayName.message}</span>
+                <span className="error-message">
+                  {errors.displayName.message}
+                </span>
               )}
             </div>
 
@@ -153,7 +166,9 @@ const Signup = () => {
               <div className="password-input-container">
                 <input
                   type={showConfirmPassword ? "text" : "password"}
-                  className={`form-input ${errors.confirmPassword ? "error" : ""}`}
+                  className={`form-input ${
+                    errors.confirmPassword ? "error" : ""
+                  }`}
                   placeholder="Confirma tu contraseña"
                   {...register("confirmPassword")}
                 />
@@ -162,11 +177,17 @@ const Signup = () => {
                   className="password-toggle"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                 >
-                  {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  {showConfirmPassword ? (
+                    <EyeOff size={20} />
+                  ) : (
+                    <Eye size={20} />
+                  )}
                 </button>
               </div>
               {errors.confirmPassword && (
-                <span className="error-message">{errors.confirmPassword.message}</span>
+                <span className="error-message">
+                  {errors.confirmPassword.message}
+                </span>
               )}
             </div>
 

@@ -8,6 +8,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import Loader from "@/src/component/Loader";
+import PageHeader from "@/src/component/PageHeader";
 
 const BookLibraryView = () => {
   const [page, setPage] = useState<number>(1);
@@ -20,10 +21,8 @@ const BookLibraryView = () => {
     useGetCurrentUserQuery(undefined);
   const { rol = "student" } = currentUser || {};
 
-  const [
-    getMore,
-    { data: dataBooks, isLoading: isLoadingBooks, error },
-  ] = useLazyFetchBooksQuery();
+  const [getMore, { data: dataBooks, isLoading: isLoadingBooks, error }] =
+    useLazyFetchBooksQuery();
 
   const { books = [], totalPages } = dataBooks || {};
 
@@ -76,11 +75,7 @@ const BookLibraryView = () => {
 
   const filteredBooks = books.filter((book: Book) => {
     const title = (book.titulo ?? "").toLowerCase();
-    const author = (
-      book.autor ??
-      book.author ??
-      ""
-    ).toLowerCase();
+    const author = (book.autor ?? book.author ?? "").toLowerCase();
     const matchesSearch = normalizedSearch
       ? title.includes(normalizedSearch) || author.includes(normalizedSearch)
       : true;
@@ -106,21 +101,21 @@ const BookLibraryView = () => {
   return (
     <div className="container">
       <br />
-      <div className="is-flex is-justify-content-space-between is-align-items-center">
-        <p className="is-size-4">Biblioteca</p>
-        {rol === "admin" && (
-          <div>
+      <PageHeader
+        title="Biblioteca"
+        description="Explora y administra el catálogo de libros."
+        hideBack
+        actions={
+          rol === "admin" ? (
             <Link
-              href={"/book/add"}
-              className="button is-primary has-text-white"
+              href="/book/add"
+              className="button is-primary has-text-white has-text-weight-semibold"
             >
-              Agregar Libro
+              Agregar libro
             </Link>
-          </div>
-        )}
-      </div>
-
-      <br />
+          ) : undefined
+        }
+      />
 
       <div className="box">
         <div className="columns">

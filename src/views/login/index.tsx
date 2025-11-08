@@ -36,7 +36,7 @@ const Login = () => {
 
     try {
       const { user, error } = await signInWithEmail(data.email, data.password);
-      
+
       if (error) {
         toast.error("Error al iniciar sesión. Verifica tus credenciales.");
         return;
@@ -55,8 +55,10 @@ const Login = () => {
   };
 
   const handleForgotPassword = async () => {
-    const email = (document.querySelector('input[type="email"]') as HTMLInputElement)?.value;
-    
+    const email = (
+      document.querySelector('input[type="email"]') as HTMLInputElement
+    )?.value;
+
     if (!email) {
       toast.error("Por favor, ingresa tu email primero");
       return;
@@ -67,7 +69,9 @@ const Login = () => {
       if (error) {
         toast.error("Error al enviar el email de recuperación");
       } else {
-        toast.success("Email de recuperación enviado. Revisa tu bandeja de entrada.");
+        toast.success(
+          "Email de recuperación enviado. Revisa tu bandeja de entrada."
+        );
         setShowForgotPassword(false);
       }
     } catch (error) {
@@ -78,6 +82,7 @@ const Login = () => {
 
   return (
     <div className="login-container">
+      <br />
       {/* Background with floating books animation */}
       <div className="floating-books">
         <div className="book book-1">📚</div>
@@ -192,7 +197,10 @@ const Login = () => {
         <div className="modal-overlay">
           <div className="modal-content">
             <h3>Recuperar Contraseña</h3>
-            <p>Ingresa tu email y te enviaremos un enlace para restablecer tu contraseña.</p>
+            <p>
+              Ingresa tu email y te enviaremos un enlace para restablecer tu
+              contraseña.
+            </p>
             <div className="modal-actions">
               <button
                 onClick={handleForgotPassword}

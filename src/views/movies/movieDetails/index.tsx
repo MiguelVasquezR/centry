@@ -1,16 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { useLazyGetMovieByIdQuery } from "@/src/redux/store/api/moviesApi";
 import { Movie } from "@/src/types/movie";
 import Image from "next/image";
-import { ChevronLeft } from "lucide-react";
+import PageHeader from "@/src/component/PageHeader";
 
 const MovieDetailsView = () => {
   const [movie, setMovie] = useState<Movie>();
   const { id } = useParams();
-  const router = useRouter();
 
   const [getMovieById, { data: dataMovie, isLoading: isLoadingMovie }] =
     useLazyGetMovieByIdQuery();
@@ -34,17 +33,16 @@ const MovieDetailsView = () => {
   return (
     <div className="container">
       <br />
-
-      <div>
-        <ChevronLeft
-          className="is-clickable"
-          size={32}
-          onClick={() => {
-            router.back();
-          }}
-        />
-      </div>
-      <br />
+      <PageHeader
+        title={movie?.titulo ?? "Detalle de película"}
+        description={
+          movie?.director
+            ? `Dirigida por ${movie.director}${
+                movie?.anioEstreno ? ` · ${movie.anioEstreno}` : ""
+              }`
+            : undefined
+        }
+      />
 
       <div className="columns">
         <div className="column is-two-thirds">

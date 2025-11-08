@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo } from "react";
-import { ChevronLeft, Info, Layers, ListChecks, Sparkles } from "lucide-react";
+import { Info, Layers, ListChecks, Sparkles } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { useForm } from "react-hook-form";
@@ -15,6 +15,7 @@ import {
 } from "@/src/redux/store/api/category";
 import { categorySchema } from "@/src/schemas/category";
 import Loader from "@/src/component/Loader";
+import PageHeader from "@/src/component/PageHeader";
 
 type CategoryFormValues = z.infer<typeof categorySchema>;
 
@@ -135,9 +136,7 @@ const AddCategoryView = () => {
   const handleFormSubmit = handleSubmit(async (values) => {
     try {
       const payload =
-        values.type === "event"
-          ? values
-          : { ...values, color: undefined };
+        values.type === "event" ? values : { ...values, color: undefined };
 
       if (isEditing) {
         const event = {
@@ -169,29 +168,28 @@ const AddCategoryView = () => {
 
   return (
     <section className="section" style={{ paddingTop: "2rem" }}>
+      <br />
       <div className="container">
-        <button
-          type="button"
-          className="button is-text is-size-6 has-text-weight-semibold mb-4"
-          onClick={() => router.back()}
-        >
-          <span className="icon">
-            <ChevronLeft size={18} />
-          </span>
-          <span>Volver</span>
-        </button>
+        <PageHeader
+          title={isEditing ? "Editar categoría" : "Nueva categoría"}
+          description="Clasifica libros, películas y eventos con una etiqueta clara y descriptiva."
+          badges={
+            <div className="tags">
+              <span className="tag is-info is-light">
+                <Sparkles size={14} style={{ marginRight: 6 }} />
+                Biblioteca curada
+              </span>
+              <span className="tag is-light">
+                <ListChecks size={14} style={{ marginRight: 6 }} />
+                {completion}% completado
+              </span>
+            </div>
+          }
+        />
 
         <div className="columns is-variable is-5">
           <div className="column is-8">
             <form className="box shadowed-form" onSubmit={handleFormSubmit}>
-              <div className="mb-5">
-                <h1 className="title is-4 mb-2">Nueva categoría</h1>
-                <p className="subtitle is-6 has-text-grey-dark">
-                  Clasifica libros, películas y eventos con una etiqueta clara y
-                  descriptiva.
-                </p>
-              </div>
-
               <div className="field">
                 <label htmlFor="title" className="label">
                   Nombre de la categoría *
@@ -233,37 +231,37 @@ const AddCategoryView = () => {
                 )}
               </div>
 
-            {watchedType === "event" && (
-              <div className="field">
-                <label htmlFor="color" className="label">
-                  Color distintivo *
-                </label>
-                <div className="control is-flex is-align-items-center is-gap-3">
-                  <input
-                    id="color"
-                    type="color"
-                    className={errors.color ? "is-danger" : ""}
-                    {...register("color")}
-                    style={{ width: "3rem", height: "3rem", padding: 0 }}
-                  />
-                  <span className="is-size-6 has-text-grey">
-                    {watchedColor?.toUpperCase()}
-                  </span>
+              {watchedType === "event" && (
+                <div className="field">
+                  <label htmlFor="color" className="label">
+                    Color distintivo *
+                  </label>
+                  <div className="control is-flex is-align-items-center is-gap-3">
+                    <input
+                      id="color"
+                      type="color"
+                      className={errors.color ? "is-danger" : ""}
+                      {...register("color")}
+                      style={{ width: "3rem", height: "3rem", padding: 0 }}
+                    />
+                    <span className="is-size-6 has-text-grey">
+                      {watchedColor?.toUpperCase()}
+                    </span>
+                  </div>
+                  <p className="help has-text-grey">
+                    Este color se usará para identificar los eventos asociados
+                    en el calendario.
+                  </p>
+                  {errors.color && (
+                    <p className="help is-danger">{errors.color.message}</p>
+                  )}
                 </div>
-                <p className="help has-text-grey">
-                  Este color se usará para identificar los eventos asociados en
-                  el calendario.
-                </p>
-                {errors.color && (
-                  <p className="help is-danger">{errors.color.message}</p>
-                )}
-              </div>
-            )}
+              )}
 
-            <div className="field">
-              <label htmlFor="description" className="label">
-                Descripción *
-              </label>
+              <div className="field">
+                <label htmlFor="description" className="label">
+                  Descripción *
+                </label>
                 <div className="control">
                   <textarea
                     id="description"

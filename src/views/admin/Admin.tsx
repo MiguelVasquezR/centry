@@ -6,6 +6,7 @@ import { Book, CalendarClock } from "lucide-react";
 import CategoryCard from "@/src/component/CategoryCard";
 import LoanCard from "@/src/component/LoanCard";
 import Loader from "@/src/component/Loader";
+import PageHeader from "@/src/component/PageHeader";
 import { useGetCategoriesQuery } from "@/src/redux/store/api/category";
 import {
   useGetLoansQuery,
@@ -18,10 +19,8 @@ import toast from "react-hot-toast";
 const AdminDashboard = () => {
   const { data: categoriesData = [], isLoading: isLoadingCategories } =
     useGetCategoriesQuery(undefined);
-  const {
-    data: loansData = [],
-    isLoading: isLoadingLoans,
-  } = useGetLoansQuery();
+  const { data: loansData = [], isLoading: isLoadingLoans } =
+    useGetLoansQuery();
 
   const loans = useMemo(() => loansData as Loan[], [loansData]);
   const [updateLoan] = useUpdateLoanMutation();
@@ -89,47 +88,52 @@ const AdminDashboard = () => {
 
   return (
     <div className="container" style={{ paddingTop: "2rem" }}>
-      <div className="card mb-5" style={{ border: "none", borderRadius: "18px" }}>
-        <div className="card-content">
-          <div className="is-flex is-justify-content-space-between is-align-items-center is-flex-wrap-wrap">
-            <div>
-              <p className="title is-4 mb-1">Panel de administración</p>
-              <p className="subtitle is-6 has-text-grey">
-                Gestiona libros, categorías, usuarios y préstamos desde un solo lugar.
-              </p>
-            </div>
-            <div className="buttons is-right">
-              <Link className="button is-primary is-light" href={"/book/add"}>
-                <Book size={16} className="mr-2" />
-                Libro
-              </Link>
-              <Link className="button is-primary is-light" href={"/categories/new"}>
-                Categoría
-              </Link>
-              <Link className="button is-primary is-light" href={"/users/add"}>
-                Usuario
-              </Link>
-              <Link className="button is-primary has-text-white" href={"/loans/create"}>
-                <CalendarClock size={16} className="mr-2" />
-                Registrar préstamo
-              </Link>
-            </div>
+      <br />
+      <PageHeader
+        title="Panel de administración"
+        description="Gestiona libros, categorías, usuarios y préstamos desde un solo lugar."
+        hideBack
+        actions={
+          <div className="buttons">
+            <Link className="button is-primary is-light" href="/book/add">
+              <Book size={16} className="mr-2" />
+              Libro
+            </Link>
+            <Link className="button is-primary is-light" href="/categories/new">
+              Categoría
+            </Link>
+            <Link className="button is-primary is-light" href="/users/add">
+              Usuario
+            </Link>
+            <Link
+              className="button is-primary has-text-white"
+              href="/loans/create"
+            >
+              <CalendarClock size={16} className="mr-2" />
+              Registrar préstamo
+            </Link>
           </div>
-        </div>
-      </div>
+        }
+      />
 
       <div className="columns is-variable is-5">
         <div className="column is-6">
-          <div className="card" style={{ borderRadius: "18px", border: "none" }}>
+          <div
+            className="card"
+            style={{ borderRadius: "18px", border: "none" }}
+          >
             <div className="card-content">
               <div className="is-flex is-justify-content-space-between is-align-items-center mb-3">
                 <div>
                   <p className="title is-5 mb-1">Categorías activas</p>
                   <p className="is-size-7 has-text-grey">
-                    Clasificaciones disponibles para eventos, publicaciones y películas.
+                    Clasificaciones disponibles para eventos, publicaciones y
+                    películas.
                   </p>
                 </div>
-                <span className="tag is-info is-light">{categoriesData.length}</span>
+                <span className="tag is-info is-light">
+                  {categoriesData.length}
+                </span>
               </div>
 
               {categoriesData.length ? (
@@ -141,7 +145,8 @@ const AdminDashboard = () => {
                         style={{
                           border: "none",
                           borderRadius: "16px",
-                          background: "linear-gradient(135deg, rgba(63,86,173,0.08) 0%, rgba(118,75,162,0.08) 100%)",
+                          background:
+                            "linear-gradient(135deg, rgba(63,86,173,0.08) 0%, rgba(118,75,162,0.08) 100%)",
                         }}
                       >
                         <CategoryCard category={category} />
@@ -159,13 +164,17 @@ const AdminDashboard = () => {
         </div>
 
         <div className="column is-6">
-          <div className="card" style={{ borderRadius: "18px", border: "none" }}>
+          <div
+            className="card"
+            style={{ borderRadius: "18px", border: "none" }}
+          >
             <div className="card-content">
               <div className="is-flex is-justify-content-space-between is-align-items-center mb-3">
                 <div>
                   <p className="title is-5 mb-1">Préstamos recientes</p>
                   <p className="is-size-7 has-text-grey">
-                    Monitorea entregas pendientes y envía recordatorios en un clic.
+                    Monitorea entregas pendientes y envía recordatorios en un
+                    clic.
                   </p>
                 </div>
                 <span className="tag is-warning is-light">{loans.length}</span>
@@ -177,8 +186,16 @@ const AdminDashboard = () => {
                     <LoanCard
                       key={loan.id}
                       loan={loan}
-                      onApprove={loan.status === "requested" ? handleApproveLoan : undefined}
-                      onReject={loan.status === "requested" ? handleRejectLoan : undefined}
+                      onApprove={
+                        loan.status === "requested"
+                          ? handleApproveLoan
+                          : undefined
+                      }
+                      onReject={
+                        loan.status === "requested"
+                          ? handleRejectLoan
+                          : undefined
+                      }
                       isProcessing={processingLoanId === loan.id}
                       processingAction={processingAction}
                     />

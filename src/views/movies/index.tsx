@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import Loader from "@/src/component/Loader";
+import PageHeader from "@/src/component/PageHeader";
 
 const MoviesLibraryView = () => {
   const [page, setPage] = useState<number>(1);
@@ -14,10 +15,7 @@ const MoviesLibraryView = () => {
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [selectedGenre, setSelectedGenre] = useState<string>("");
 
-  const [
-    getMore,
-    { data: dataMovies, isLoading: isLoadingMovies, error },
-  ] =
+  const [getMore, { data: dataMovies, isLoading: isLoadingMovies, error }] =
     useLazyFetchMoviesQuery();
 
   const { movies = [], totalPages = 0 } = dataMovies || {};
@@ -55,19 +53,19 @@ const MoviesLibraryView = () => {
   return (
     <div className="container">
       <br />
-      <div className="is-flex is-justify-content-space-between is-align-items-center">
-        <p className="is-size-4 has-text-weight-bold">Cineteca</p>
-        <div>
+      <PageHeader
+        title="Cineteca"
+        description="Consulta el catálogo audiovisual de la comunidad."
+        hideBack
+        actions={
           <Link
             href="/movies/add"
             className="button is-primary has-text-white has-text-weight-semibold"
           >
             Agregar película
           </Link>
-        </div>
-      </div>
-
-      <br />
+        }
+      />
 
       <div className="box">
         <div className="columns is-variable is-3">

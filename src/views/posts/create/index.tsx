@@ -5,15 +5,7 @@ import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useRouter, useSearchParams } from "next/navigation";
-import {
-  ChevronLeft,
-  Upload,
-  X,
-  Info,
-  ListChecks,
-  ImagePlus,
-  Sparkles,
-} from "lucide-react";
+import { Upload, X, Info, ListChecks, ImagePlus, Sparkles } from "lucide-react";
 import Image from "next/image";
 import { Book } from "../../../types/book";
 import TipTapEditor from "../../../component/TipTapEditor";
@@ -21,6 +13,7 @@ import Select, { StylesConfig } from "react-select";
 import { useCreatePostMutation } from "../../../redux/store/api/postsApi";
 import { useGetBooksQuery } from "../../../redux/store/api/booksApi";
 import Loader from "@/src/component/Loader";
+import PageHeader from "@/src/component/PageHeader";
 
 // Zod schema for post validation
 const postSchema = z.object({
@@ -324,41 +317,24 @@ const CreatePostView = () => {
   return (
     <div className="container">
       <br />
-      <div className="card mb-5">
-        <div className="card-content">
-          <div className="level is-align-items-center is-mobile">
-            <div className="level-left">
-              <div className="level-item">
-                <button
-                  type="button"
-                  onClick={() => router.back()}
-                  className="button is-light is-medium mr-4"
-                >
-                  <ChevronLeft className="mr-2" />
-                  Volver
-                </button>
-              </div>
-              <div className="level-item">
-                <div>
-                  <p className="title is-4 mb-1">Crear nueva publicación</p>
-                  <p className="subtitle is-6 has-text-grey mb-3">
-                    Comparte una actualización editorial con la comunidad.
-                  </p>
-                  <div className="tags">
-                    <span className="tag is-info is-light">
-                      <Sparkles size={14} style={{ marginRight: 6 }} />
-                      Inspira a tu comunidad
-                    </span>
-                    <span className="tag is-light">
-                      <ListChecks size={14} style={{ marginRight: 6 }} />
-                      {completion}% completado
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
+      <PageHeader
+        title="Crear nueva publicación"
+        description="Comparte una actualización editorial con la comunidad."
+        badges={
+          <div className="tags">
+            <span className="tag is-info is-light">
+              <Sparkles size={14} style={{ marginRight: 6 }} />
+              Inspira a tu comunidad
+            </span>
+            <span className="tag is-light">
+              <ListChecks size={14} style={{ marginRight: 6 }} />
+              {completion}% completado
+            </span>
           </div>
-          <div className="is-hidden-tablet mt-3">
+        }
+      >
+        <div className="is-flex is-justify-content-flex-end">
+          <div style={{ minWidth: "220px" }}>
             <progress
               className="progress is-primary is-small"
               value={completion}
@@ -371,7 +347,7 @@ const CreatePostView = () => {
             </p>
           </div>
         </div>
-      </div>
+      </PageHeader>
 
       <div className="columns is-variable is-5">
         <div className="column is-8-desktop is-12-tablet">

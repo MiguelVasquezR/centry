@@ -12,6 +12,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import Loader from "@/src/component/Loader";
+import PageHeader from "@/src/component/PageHeader";
 
 const Users = () => {
   const { data: users, isLoading: isLoadingUsers } =
@@ -33,6 +34,7 @@ const Users = () => {
 
     return (
       <div className="column is-2">
+        <br />
         <div className="card has-shadow is-relative">
           <div
             onClick={() => {
@@ -114,26 +116,21 @@ const Users = () => {
 
   return (
     <div className="container">
-      <br />
-
-      <div className="is-flex is-justify-content-space-between">
-        <div className="">
-          <p className="is-size-4 has-text-weight-bold">Usuarios</p>
-        </div>
-
-        {rol === "admin" && (
-          <div className="">
+      <PageHeader
+        title="Usuarios"
+        description="Consulta y gestiona los perfiles de la comunidad."
+        hideBack
+        actions={
+          rol === "admin" ? (
             <Link
               href="/users/add"
               className="button is-primary has-text-white"
             >
               Agregar
             </Link>
-          </div>
-        )}
-      </div>
-
-      <br />
+          ) : undefined
+        }
+      />
 
       <div>
         <div className="card p-3">

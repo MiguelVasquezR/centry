@@ -3,12 +3,12 @@
 import { DateTime } from "luxon";
 import Image from "next/image";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import {
   useFetchPostByIdQuery,
   useUpdatePostMutation,
 } from "@/src/redux/store/api/postsApi";
-import { ChevronLeft, BookOpen, Eye, Heart } from "lucide-react";
+import { BookOpen, Eye, Heart } from "lucide-react";
 import type { FirestoreTimestamp } from "@/src/types/postList";
 import {
   useGetCurrentUserQuery,
@@ -24,6 +24,7 @@ import {
 } from "@/src/redux/store/api/commentsApi";
 import type { PostComment } from "@/src/types/comment";
 import GeneralModal from "@/src/component/GeneralModal";
+import PageHeader from "@/src/component/PageHeader";
 
 const coerceDateTime = (value: unknown): DateTime | null => {
   if (!value) return null;
@@ -87,7 +88,6 @@ const sanitizeHTML = (html: string) => {
 
 const PostDetailView = () => {
   const params = useParams();
-  const router = useRouter();
   const postId = typeof params?.id === "string" ? params.id : "";
   const [authorPost, setAuthorPost] = useState<User>();
   const [localUserId, setLocalUserId] = useState("");
@@ -95,7 +95,9 @@ const PostDetailView = () => {
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState("");
   const [commentError, setCommentError] = useState<string | null>(null);
-  const [commentInActionId, setCommentInActionId] = useState<string | null>(null);
+  const [commentInActionId, setCommentInActionId] = useState<string | null>(
+    null
+  );
   const [commentPendingDelete, setCommentPendingDelete] =
     useState<PostComment | null>(null);
 
@@ -302,7 +304,9 @@ const PostDetailView = () => {
       setCommentPendingDelete(null);
     } catch (error) {
       console.error("Error al eliminar comentario:", error);
-      setCommentError("No pudimos eliminar el comentario. Vuelve a intentarlo.");
+      setCommentError(
+        "No pudimos eliminar el comentario. Vuelve a intentarlo."
+      );
     } finally {
       setCommentInActionId(null);
     }
@@ -351,100 +355,91 @@ const PostDetailView = () => {
   return (
     <div className="container">
       <br />
-      <div className="card mb-5">
-        <div className="card-content">
-          <div className="level is-mobile">
-            <div className="level-left">
-              <button
-                onClick={() => router.back()}
-                className="button is-light is-medium mr-4"
-                type="button"
+
+      <PageHeader
+        title={post.title}
+        description={formattedDate || "Fecha no disponible"}
+        badges={
+          <div className="tags mt-2">
+            <span className="tag is-info is-light">
+              <Heart size={16} className="mr-1" />
+              {post.reactions?.length ?? 0} reacciones
+            </span>
+            <span className="tag is-light">
+              <Eye size={16} className="mr-1" />
+              {post.readings?.length ?? 0} lecturas
+            </span>
+            {post.preference?.book && (
+              <Link
+                href={`/book/${post.preference.book}`}
+                className="tag is-primary is-light"
               >
-                <ChevronLeft className="mr-2" />
-                Regresar
-              </button>
-              <div>
-                <p className="title is-3 mb-1">{post.title}</p>
-                <p className="is-size-6 has-text-grey">
-                  {formattedDate || "Fecha no disponible"}
-                </p>
-                <div className="tags mt-2">
-                  <span className="tag is-info is-light">
-                    <Heart size={16} className="mr-1" />
-                    {post.reactions?.length ?? 0} reacciones
-                  </span>
-                  <span className="tag is-light">
-                    <Eye size={16} className="mr-1" />
-                    {post.readings?.length ?? 0} lecturas
-                  </span>
-                  {post.preference?.book && (
-                    <Link
-                      href={`/book/${post.preference.book}`}
-                      className="tag is-primary is-light"
-                    >
-                      <BookOpen size={16} className="mr-1" />
-                      Libro relacionado
-                    </Link>
-                  )}
-                </div>
-              </div>
-            </div>
-            <div className="level-right">
-              <span className="tag is-size-7 is-light has-text-weight-semibold">
-                Visibilidad: {visibilityLabel}
-              </span>
-            </div>
+                <BookOpen size={16} className="mr-1" />
+                Libro relacionado
+              </Link>
+            )}
           </div>
+        }
+        actions={
+          <span className="tag is-size-7 is-light has-text-weight-semibold">
+            Visibilidad: {visibilityLabel}
+          </span>
+        }
+      />
 
-          {mainImage && (
-            <div
-              className="mt-5"
-              style={{
-                borderRadius: "18px",
-                overflow: "hidden",
-                position: "relative",
-              }}
-            >
-              <Image
-                src={mainImage}
-                alt={post.title}
-                width={1200}
-                height={540}
-                style={{ objectFit: "cover", width: "100%", height: "auto" }}
-                priority
-              />
-            </div>
-          )}
+      {(mainImage || remainingImages.length > 0) && (
+        <div className="card mb-5">
+          <div className="card-content">
+            {mainImage && (
+              <div
+                className="mt-2"
+                style={{
+                  borderRadius: "18px",
+                  overflow: "hidden",
+                  position: "relative",
+                }}
+              >
+                <Image
+                  src={mainImage}
+                  alt={post.title}
+                  width={1200}
+                  height={540}
+                  style={{ objectFit: "cover", width: "100%", height: "auto" }}
+                  priority
+                />
+              </div>
+            )}
 
-          {remainingImages.length > 0 && (
-            <div className="columns is-multiline mt-3">
-              {remainingImages.map((image, index) => (
-                <div
-                  key={`${image}-${index}`}
-                  className="column is-4-tablet is-3-desktop"
-                >
-                  <figure
-                    className="image is-3by2"
-                    style={{
-                      borderRadius: "16px",
-                      overflow: "hidden",
-                      position: "relative",
-                    }}
+            {remainingImages.length > 0 && (
+              <div className="columns is-multiline mt-3">
+                {remainingImages.map((image, index) => (
+                  <div
+                    key={`${image}-${index}`}
+                    className="column is-4-tablet is-3-desktop"
                   >
-                    <Image
-                      src={image}
-                      alt={`${post.title} imagen ${index + 2}`}
-                      fill
-                      sizes="(max-width: 768px) 50vw, 240px"
-                      style={{ objectFit: "cover" }}
-                    />
-                  </figure>
-                </div>
-              ))}
-            </div>
-          )}
+                    <figure
+                      className="image is-3by2"
+                      style={{
+                        borderRadius: "16px",
+                        overflow: "hidden",
+                        position: "relative",
+                      }}
+                    >
+                      <Image
+                        src={image}
+                        alt={`${post.title} imagen ${index + 2}`}
+                        fill
+                        sizes="(max-width: 768px) 50vw, 240px"
+                        style={{ objectFit: "cover" }}
+                      />
+                    </figure>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="columns">
         <div className="column is-8">
@@ -508,8 +503,7 @@ const PostDetailView = () => {
                                   className="button is-success is-light"
                                   onClick={handleUpdateComment}
                                   disabled={
-                                    isUpdatingComment ||
-                                    !editingContent.trim()
+                                    isUpdatingComment || !editingContent.trim()
                                   }
                                 >
                                   {isUpdatingComment ? "Guardando…" : "Guardar"}
@@ -609,9 +603,7 @@ const PostDetailView = () => {
                   type="button"
                   onClick={handleCreateComment}
                   disabled={
-                    !currentUserId ||
-                    isCreatingComment ||
-                    !newComment.trim()
+                    !currentUserId || isCreatingComment || !newComment.trim()
                   }
                 >
                   {isCreatingComment ? "Publicando…" : "Publicar comentario"}

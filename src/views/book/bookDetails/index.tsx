@@ -10,7 +10,7 @@ import Loader from "@/src/component/Loader";
 import { Book } from "@/src/types/book";
 import type { Post } from "@/src/types/post";
 import Image from "next/image";
-import { ChevronLeft } from "lucide-react";
+import PageHeader from "@/src/component/PageHeader";
 import { DateTime } from "luxon";
 import toast from "react-hot-toast";
 import { useGetCurrentUserQuery } from "@/src/redux/store/api/usersApi";
@@ -147,7 +147,8 @@ const BookDetailsView = () => {
 
     try {
       const now = DateTime.now();
-      const startDateISO = now.toISODate() ?? new Date().toISOString().slice(0, 10);
+      const startDateISO =
+        now.toISODate() ?? new Date().toISOString().slice(0, 10);
       const dueDateISO =
         now.plus({ days: 15 }).toISODate() ??
         new Date(Date.now() + 15 * 24 * 60 * 60 * 1000)
@@ -187,17 +188,10 @@ const BookDetailsView = () => {
   return (
     <div className="container">
       <br />
-
-      <div>
-        <ChevronLeft
-          className="is-clickable"
-          size={32}
-          onClick={() => {
-            router.back();
-          }}
-        />
-      </div>
-      <br />
+      <PageHeader
+        title={book?.titulo ?? "Detalles del libro"}
+        description={book?.autor ? `Por ${book.autor}` : undefined}
+      />
 
       <div className="columns">
         <div className="column">

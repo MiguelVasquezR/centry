@@ -15,7 +15,7 @@ import type { Loan } from "@/src/types/loan";
 import type { Book } from "@/src/types/book";
 import type { User } from "@/src/types/user";
 import Link from "next/link";
-import { ChevronLeft } from "lucide-react";
+import PageHeader from "@/src/component/PageHeader";
 import Select from "react-select";
 
 const loanSchema = z.object({
@@ -44,7 +44,9 @@ const LoanForm = () => {
   );
 
   const users: User[] = useMemo(() => {
-    const entries = Object.values(groupedUsers as Record<string, User[] | undefined>);
+    const entries = Object.values(
+      groupedUsers as Record<string, User[] | undefined>
+    );
     return entries.flatMap((list) => list ?? []);
   }, [groupedUsers]);
 
@@ -133,26 +135,19 @@ const LoanForm = () => {
 
   return (
     <div className="container" style={{ paddingTop: "2rem" }}>
-      <div className="is-flex is-justify-content-space-between is-align-items-center mb-4">
-        <button
-          type="button"
-          className="button is-light"
-          onClick={() => router.back()}
-        >
-          <ChevronLeft size={18} className="mr-2" /> Volver
-        </button>
-        <Link href="/admin" className="button is-text is-small">
-          Panel de administración
-        </Link>
-      </div>
+      <br />
+      <PageHeader
+        title="Registrar préstamo"
+        description="Selecciona el libro y la persona responsable del préstamo."
+        actions={
+          <Link href="/admin" className="button is-text is-small">
+            Panel de administración
+          </Link>
+        }
+      />
 
       <div className="card">
         <div className="card-content">
-          <h1 className="title is-4">Registrar préstamo</h1>
-          <p className="subtitle is-6 has-text-grey">
-            Selecciona el libro y la persona responsable del préstamo.
-          </p>
-
           <form onSubmit={onSubmit} className="mt-4">
             <div className="field">
               <label className="label">Libro *</label>
@@ -166,7 +161,11 @@ const LoanForm = () => {
                     classNamePrefix="react-select"
                     placeholder="Selecciona un libro"
                     options={bookOptions}
-                    value={bookOptions.find((option) => option.value === field.value) ?? null}
+                    value={
+                      bookOptions.find(
+                        (option) => option.value === field.value
+                      ) ?? null
+                    }
                     onChange={(option) => field.onChange(option?.value ?? "")}
                     onBlur={field.onBlur}
                     isClearable
@@ -190,7 +189,11 @@ const LoanForm = () => {
                     classNamePrefix="react-select"
                     placeholder="Selecciona un usuario"
                     options={userOptions}
-                    value={userOptions.find((option) => option.value === field.value) ?? null}
+                    value={
+                      userOptions.find(
+                        (option) => option.value === field.value
+                      ) ?? null
+                    }
                     onChange={(option) => field.onChange(option?.value ?? "")}
                     onBlur={field.onBlur}
                     isClearable

@@ -4,14 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
 import { useEffect } from "react";
-import {
-  Mail,
-  BookOpen,
-  Calendar,
-  ArrowLeft,
-  CheckCircle2,
-  XCircle,
-} from "lucide-react";
+import { Mail, BookOpen, Calendar, CheckCircle2, XCircle } from "lucide-react";
 import {
   useGetCurrentUserQuery,
   useLazyGetUserByIdQuery,
@@ -19,6 +12,7 @@ import {
 import type { User } from "@/src/types/user";
 import clsx from "clsx";
 import Loader from "@/src/component/Loader";
+import PageHeader from "@/src/component/PageHeader";
 
 const fallbackAvatar =
   "https://res.cloudinary.com/dvt4vznxn/image/upload/v1758764097/138617_ar3v0q.jpg";
@@ -95,19 +89,27 @@ const UserProfile = () => {
   return (
     <div className="container">
       <br />
-      <div className="is-flex is-justify-content-space-between is-align-items-center mb-4">
-        <button
-          className="button is-light is-small"
-          onClick={() => router.back()}
-          type="button"
-        >
-          <ArrowLeft size={16} className="mr-2" />
-          Volver
-        </button>
-        <Link href="/users" className="button is-text is-small">
-          Ver directorio
-        </Link>
-      </div>
+      <PageHeader
+        title={name}
+        description={tuition}
+        badges={
+          <div className="tags">
+            <span
+              className={clsx("tag", {
+                "is-success is-light": isActive,
+                "is-warning is-light": !isActive,
+              })}
+            >
+              {isActive ? "Activo" : "Inactivo"}
+            </span>
+          </div>
+        }
+        actions={
+          <Link href="/users" className="button is-text is-small">
+            Ver directorio
+          </Link>
+        }
+      />
 
       <div
         className="card mb-5"

@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { ChevronLeft } from "lucide-react";
+import PageHeader from "@/src/component/PageHeader";
 import {
   useCreateMovieMutation,
   useUpdateMovieMutation,
@@ -17,9 +17,7 @@ import toast from "react-hot-toast";
 const movieSchema = z.object({
   titulo: z.string().min(1, "El título es requerido"),
   director: z.string().min(1, "El director es requerido"),
-  sinopsis: z
-    .string()
-    .min(10, "La sinopsis debe tener al menos 10 caracteres"),
+  sinopsis: z.string().min(10, "La sinopsis debe tener al menos 10 caracteres"),
   genero: z.string().min(1, "El género es requerido"),
   duracion: z.string().min(1, "La duración es requerida"),
   anioEstreno: z
@@ -177,23 +175,11 @@ const MovieForm = ({ movieId, mode = "add" }: MovieFormProps) => {
   return (
     <div className="container">
       <br />
-      <div className="level mb-5">
-        <div className="level-left">
-          <button
-            type="button"
-            className="button is-light is-medium"
-            onClick={() => router.back()}
-          >
-            <ChevronLeft className="mr-2" />
-            Volver
-          </button>
-        </div>
-        <div className="level-right">
-          <p className="title is-4 mb-0">
-            {mode === "edit" ? "Editar película" : "Registrar nueva película"}
-          </p>
-        </div>
-      </div>
+
+      <PageHeader
+        title={mode === "edit" ? "Editar película" : "Registrar nueva película"}
+        description="Comparte producciones audiovisuales con la comunidad."
+      />
 
       <form className="card" onSubmit={handleSubmit(onFormSubmit)}>
         <div className="card-content">
@@ -294,13 +280,17 @@ const MovieForm = ({ movieId, mode = "add" }: MovieFormProps) => {
                     <div className="control">
                       <input
                         type="text"
-                        className={`input ${errors.duracion ? "is-danger" : ""}`}
+                        className={`input ${
+                          errors.duracion ? "is-danger" : ""
+                        }`}
                         placeholder="Ej. 1h 45m o 105 minutos"
                         {...register("duracion")}
                       />
                     </div>
                     {errors.duracion && (
-                      <p className="help is-danger">{errors.duracion.message}</p>
+                      <p className="help is-danger">
+                        {errors.duracion.message}
+                      </p>
                     )}
                   </div>
 
@@ -380,7 +370,10 @@ const MovieForm = ({ movieId, mode = "add" }: MovieFormProps) => {
                       />
                     </figure>
                   ) : (
-                    <div className="has-background-light p-5 is-flex is-flex-direction-column is-align-items-center is-justify-content-center" style={{ borderRadius: "12px" }}>
+                    <div
+                      className="has-background-light p-5 is-flex is-flex-direction-column is-align-items-center is-justify-content-center"
+                      style={{ borderRadius: "12px" }}
+                    >
                       <span className="icon is-large has-text-grey-light">
                         🎬
                       </span>

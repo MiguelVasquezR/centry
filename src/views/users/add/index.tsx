@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import { useParams, useRouter } from "next/navigation";
-import { ChevronLeft, ImagePlus, Info, UserCircle2 } from "lucide-react";
+import { ImagePlus, Info, UserCircle2 } from "lucide-react";
 import Image from "next/image";
 import toast from "react-hot-toast";
 
@@ -19,6 +19,7 @@ import { userSchema } from "@/src/schemas/user";
 import z from "zod";
 import { uploadFileToCloudinary } from "@/src/utils/utils";
 import Loader from "@/src/component/Loader";
+import PageHeader from "@/src/component/PageHeader";
 
 type UserFormData = z.infer<typeof userSchema>;
 
@@ -180,23 +181,19 @@ const AddUserView = () => {
   return (
     <div className="container">
       <br />
-      <div className="mb-5">
-        <div className="card-content">
-          <div className="level is-align-items-center is-mobile">
-            <div className="level-left">
-              <div className="level-item">
-                <button
-                  onClick={() => router.back()}
-                  className="button is-light is-medium mr-4"
-                  type="button"
-                >
-                  <ChevronLeft className="mr-2" />
-                </button>
-              </div>
-            </div>
+      <PageHeader
+        title={isEditing ? "Editar usuario" : "Registrar usuario"}
+        description="Gestiona la identidad y contacto de quienes integran la comunidad."
+        badges={
+          <div className="tags">
+            <span className="tag is-info is-light">
+              <Info size={14} style={{ marginRight: 6 }} />
+              Datos personales
+            </span>
+            <span className="tag is-light">{completion}% completado</span>
           </div>
-        </div>
-      </div>
+        }
+      />
 
       <form onSubmit={handleSubmit(onSubmit)}>
         <div className="columns is-variable is-5">

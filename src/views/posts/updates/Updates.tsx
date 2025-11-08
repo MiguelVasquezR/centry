@@ -11,6 +11,7 @@ import { useGetEventsQuery } from "@/src/redux/store/api/eventApi";
 import { EventType } from "@/src/types/event";
 import Loader from "@/src/component/Loader";
 import { useGetCurrentUserQuery } from "@/src/redux/store/api/usersApi";
+import PageHeader from "@/src/component/PageHeader";
 
 const Updates = () => {
   const getCreatedAtMillis = (value: PostListItem["createdAt"]) => {
@@ -105,23 +106,19 @@ const Updates = () => {
   return (
     <div className="container">
       <br />
-      <div className="is-flex is-flex-direction-row is-justify-content-space-between is-align-items-center">
-        <div className="is-flex is-flex-direction-column">
-          <p className="is-size-4 has-text-weight-bold">
-            {greeting ? `${greeting}, ${name}!` : `Hola, ${name}!`}
-          </p>
-          <p className="is-size-6 has-text-grey">{todayLabel}</p>
-        </div>
-
-        <div className="is-flex is-align-items-center is-gap-2">
+      <PageHeader
+        title={greeting ? `${greeting}, ${name}!` : `Hola, ${name}!`}
+        description={todayLabel}
+        hideBack
+        actions={
           <Link
             className="button is-primary has-text-white has-text-weight-semibold"
             href="/posts/create"
           >
             Crear publicación
           </Link>
-        </div>
-      </div>
+        }
+      />
 
       <div className="columns mt-5">
         <div className="column is-9">

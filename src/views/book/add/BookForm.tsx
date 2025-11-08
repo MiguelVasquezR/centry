@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { ChevronLeft, ImagePlus, Info, Layers, ListChecks, Sparkles } from "lucide-react";
+import { ImagePlus, Info, Layers, ListChecks, Sparkles } from "lucide-react";
 import {
   useCreateBookMutation,
   useUpdateBookMutation,
@@ -16,15 +16,13 @@ import type { Book } from "@/src/types/book";
 import toast from "react-hot-toast";
 import BookShelfMap, { DEFAULT_SHELVES } from "@/src/component/BookShelfMap";
 import Loader from "@/src/component/Loader";
+import PageHeader from "@/src/component/PageHeader";
 
 const SHELVES = DEFAULT_SHELVES;
-const SHELF_LABELS: Record<string, string> = SHELVES.reduce(
-  (acc, shelf) => {
-    acc[shelf.id] = shelf.label;
-    return acc;
-  },
-  {} as Record<string, string>
-);
+const SHELF_LABELS: Record<string, string> = SHELVES.reduce((acc, shelf) => {
+  acc[shelf.id] = shelf.label;
+  return acc;
+}, {} as Record<string, string>);
 
 // Zod schema for book validation
 const bookSchema = z.object({
@@ -67,7 +65,8 @@ const BookForm = ({ bookId, mode = "add" }: BookFormProps) => {
   const [updateBook, { isLoading: isUpdatingBook }] = useUpdateBookMutation();
 
   // Fetch book data if in edit mode
-  const [getBookById, { data: bookData, isLoading: isLoadingBook }] = useLazyGetBookByIdQuery();
+  const [getBookById, { data: bookData, isLoading: isLoadingBook }] =
+    useLazyGetBookByIdQuery();
   const book = bookData;
 
   // Trigger query when in edit mode
@@ -87,7 +86,7 @@ const BookForm = ({ bookId, mode = "add" }: BookFormProps) => {
     setValue,
   } = useForm<BookFormData>({
     resolver: zodResolver(bookSchema),
-  defaultValues: {
+    defaultValues: {
       titulo: "",
       author: "",
       descripcion: "",
@@ -179,11 +178,15 @@ const BookForm = ({ bookId, mode = "add" }: BookFormProps) => {
 
     const shelfDefinition = SHELVES.find((shelf) => shelf.id === newShelfId);
     const currentRow =
-      typeof watchedRow === "number" && shelfDefinition && watchedRow < shelfDefinition.rows
+      typeof watchedRow === "number" &&
+      shelfDefinition &&
+      watchedRow < shelfDefinition.rows
         ? watchedRow
         : 0;
     const currentCol =
-      typeof watchedCol === "number" && shelfDefinition && watchedCol < shelfDefinition.cols
+      typeof watchedCol === "number" &&
+      shelfDefinition &&
+      watchedCol < shelfDefinition.cols
         ? watchedCol
         : 0;
 
@@ -320,73 +323,37 @@ const BookForm = ({ bookId, mode = "add" }: BookFormProps) => {
   return (
     <div className="container">
       <br />
-
-      <div className="card mb-5">
-        <div className="card-content">
-          <div className="level is-align-items-center is-mobile">
-            <div className="level-left">
-              <div className="level-item">
-                <button
-                  type="button"
-                  className="button is-light is-medium"
-                  onClick={() => router.back()}
-                >
-                  <ChevronLeft className="mr-2" />
-                  Volver
-                </button>
-              </div>
-              <div className="level-item">
-                <div>
-                  <p className="title is-4 mb-1">
-                    {mode === "edit"
-                      ? "Editar registro de libro"
-                      : "Agregar nuevo libro"}
-                  </p>
-                  <p className="subtitle is-6 has-text-grey">
-                    Completa la ficha bibliográfica para mantener ordenada la biblioteca.
-                  </p>
-                  <div className="tags">
-                    <span className="tag is-info is-light">
-                      <Sparkles size={14} style={{ marginRight: 6 }} />
-                      Curaduría editorial
-                    </span>
-                    <span className="tag is-light">
-                      <ListChecks size={14} style={{ marginRight: 6 }} />
-                      {completion}% completado
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="level-right is-hidden-mobile">
-              <div className="level-item" style={{ minWidth: "220px" }}>
-                <progress
-                  className="progress is-primary is-small"
-                  value={completion}
-                  max={100}
-                >
-                  {completion}%
-                </progress>
-                <p className="is-size-7 has-text-grey has-text-right mt-1">
-                  Guarda el registro al llegar al 100 %
-                </p>
-              </div>
-            </div>
+      <PageHeader
+        title={
+          mode === "edit" ? "Editar registro de libro" : "Agregar nuevo libro"
+        }
+        description="Completa la ficha bibliográfica para mantener ordenada la biblioteca."
+        badges={
+          <div className="tags">
+            <span className="tag is-info is-light">
+              <Sparkles size={14} style={{ marginRight: 6 }} />
+              Curaduría editorial
+            </span>
+            <span className="tag is-light">
+              <ListChecks size={14} style={{ marginRight: 6 }} />
+              {completion}% completado
+            </span>
           </div>
-          <div className="is-hidden-tablet mt-3">
-            <progress
-              className="progress is-primary is-small"
-              value={completion}
-              max={100}
-            >
-              {completion}%
-            </progress>
-            <p className="is-size-7 has-text-grey mt-1">
-              Guarda el registro al llegar al 100 %
-            </p>
-          </div>
+        }
+      >
+        <div style={{ minWidth: "220px" }}>
+          <progress
+            className="progress is-primary is-small"
+            value={completion}
+            max={100}
+          >
+            {completion}%
+          </progress>
+          <p className="is-size-7 has-text-grey has-text-right mt-1">
+            Guarda el registro al llegar al 100 %
+          </p>
         </div>
-      </div>
+      </PageHeader>
 
       <form onSubmit={handleSubmit(onFormSubmit)}>
         <div className="columns is-variable is-5">
@@ -408,14 +375,18 @@ const BookForm = ({ bookId, mode = "add" }: BookFormProps) => {
                       <label className="label">Título *</label>
                       <div className="control">
                         <input
-                          className={`input ${errors.titulo ? "is-danger" : ""}`}
+                          className={`input ${
+                            errors.titulo ? "is-danger" : ""
+                          }`}
                           type="text"
                           placeholder="Ej. La casa de los espíritus"
                           {...register("titulo")}
                         />
                       </div>
                       {errors.titulo && (
-                        <p className="help is-danger">{errors.titulo.message}</p>
+                        <p className="help is-danger">
+                          {errors.titulo.message}
+                        </p>
                       )}
                     </div>
                   </div>
@@ -424,14 +395,18 @@ const BookForm = ({ bookId, mode = "add" }: BookFormProps) => {
                       <label className="label">Autor *</label>
                       <div className="control">
                         <input
-                          className={`input ${errors.author ? "is-danger" : ""}`}
+                          className={`input ${
+                            errors.author ? "is-danger" : ""
+                          }`}
                           type="text"
                           placeholder="Nombre y apellido"
                           {...register("author")}
                         />
                       </div>
                       {errors.author && (
-                        <p className="help is-danger">{errors.author.message}</p>
+                        <p className="help is-danger">
+                          {errors.author.message}
+                        </p>
                       )}
                     </div>
                   </div>
@@ -457,7 +432,9 @@ const BookForm = ({ bookId, mode = "add" }: BookFormProps) => {
                     />
                   </div>
                   {errors.descripcion && (
-                    <p className="help is-danger">{errors.descripcion.message}</p>
+                    <p className="help is-danger">
+                      {errors.descripcion.message}
+                    </p>
                   )}
                 </div>
               </div>
@@ -472,7 +449,9 @@ const BookForm = ({ bookId, mode = "add" }: BookFormProps) => {
                       <label className="label">Editorial *</label>
                       <div className="control">
                         <input
-                          className={`input ${errors.editorial ? "is-danger" : ""}`}
+                          className={`input ${
+                            errors.editorial ? "is-danger" : ""
+                          }`}
                           type="text"
                           placeholder="Editorial"
                           {...register("editorial")}
@@ -514,14 +493,18 @@ const BookForm = ({ bookId, mode = "add" }: BookFormProps) => {
                       <label className="label">Número de páginas *</label>
                       <div className="control">
                         <input
-                          className={`input ${errors.numPag ? "is-danger" : ""}`}
+                          className={`input ${
+                            errors.numPag ? "is-danger" : ""
+                          }`}
                           type="text"
                           placeholder="Ej. 384"
                           {...register("numPag")}
                         />
                       </div>
                       {errors.numPag && (
-                        <p className="help is-danger">{errors.numPag.message}</p>
+                        <p className="help is-danger">
+                          {errors.numPag.message}
+                        </p>
                       )}
                     </div>
                   </div>
@@ -607,7 +590,8 @@ const BookForm = ({ bookId, mode = "add" }: BookFormProps) => {
                         (shelf) => shelf.id === selectedShelfId
                       );
                       const fieldValue =
-                        field.value && Number(field.value.repisa) === Number(selectedShelfId)
+                        field.value &&
+                        Number(field.value.repisa) === Number(selectedShelfId)
                           ? field.value
                           : {
                               repisa: Number(selectedShelfId),
@@ -669,7 +653,9 @@ const BookForm = ({ bookId, mode = "add" }: BookFormProps) => {
 
                 <p className="help has-text-grey mt-3">
                   {selectedShelfId && watchedCol !== null && watchedRow !== null
-                    ? `Seleccionado: ${SHELF_LABELS[selectedShelfId] ?? selectedShelfId} · fila ${watchedRow} · columna ${watchedCol}`
+                    ? `Seleccionado: ${
+                        SHELF_LABELS[selectedShelfId] ?? selectedShelfId
+                      } · fila ${watchedRow} · columna ${watchedCol}`
                     : "Selecciona cualquier recuadro. Las coordenadas comienzan en 0 (fila, columna)."}
                 </p>
               </div>
@@ -679,7 +665,8 @@ const BookForm = ({ bookId, mode = "add" }: BookFormProps) => {
               <div className="card-content">
                 <div className="is-flex is-align-items-center is-justify-content-space-between is-flex-wrap-wrap">
                   <p className="is-size-7 has-text-grey">
-                    Verifica los datos antes de guardar. Siempre podrás editar el registro posteriormente.
+                    Verifica los datos antes de guardar. Siempre podrás editar
+                    el registro posteriormente.
                   </p>
                   <button
                     type="submit"
@@ -703,15 +690,20 @@ const BookForm = ({ bookId, mode = "add" }: BookFormProps) => {
                 <div className="card-content">
                   <h3 className="title is-5">Carátula</h3>
                   <p className="is-size-7 has-text-grey">
-                    La imagen ayuda a reconocer el libro rápidamente en la biblioteca digital.
+                    La imagen ayuda a reconocer el libro rápidamente en la
+                    biblioteca digital.
                   </p>
                   <label
                     htmlFor="book-cover"
                     className={`is-flex is-flex-direction-column is-align-items-center is-justify-content-center has-text-centered mt-4 p-5 ${
-                      isDragActive ? "has-background-primary-light" : "has-background-light"
+                      isDragActive
+                        ? "has-background-primary-light"
+                        : "has-background-light"
                     }`}
                     style={{
-                      border: `2px dashed ${isDragActive ? "#485fc7" : "#d7d8dd"}`,
+                      border: `2px dashed ${
+                        isDragActive ? "#485fc7" : "#d7d8dd"
+                      }`,
                       borderRadius: "18px",
                       transition: "border-color 0.2s ease",
                       cursor: "pointer",
@@ -725,7 +717,10 @@ const BookForm = ({ bookId, mode = "add" }: BookFormProps) => {
                       Arrastra la portada aquí
                     </span>
                     <span className="is-size-7 has-text-grey">
-                      o <span className="has-text-link">haz clic para buscarla</span>
+                      o{" "}
+                      <span className="has-text-link">
+                        haz clic para buscarla
+                      </span>
                     </span>
                     <input
                       id="book-cover"
@@ -781,8 +776,12 @@ const BookForm = ({ bookId, mode = "add" }: BookFormProps) => {
                     </p>
                     <p className="is-size-7">
                       <strong>Ubicación:</strong>{" "}
-                      {watchedShelf && watchedCol !== null && watchedRow !== null
-                        ? `${SHELF_LABELS[watchedShelf] ?? watchedShelf} · fila ${watchedRow} · columna ${watchedCol}`
+                      {watchedShelf &&
+                      watchedCol !== null &&
+                      watchedRow !== null
+                        ? `${
+                            SHELF_LABELS[watchedShelf] ?? watchedShelf
+                          } · fila ${watchedRow} · columna ${watchedCol}`
                         : "Sin asignar"}
                     </p>
                   </div>
@@ -799,7 +798,8 @@ const BookForm = ({ bookId, mode = "add" }: BookFormProps) => {
                   <div className="notification is-info is-light mt-3 is-flex is-align-items-center">
                     <Info size={14} style={{ marginRight: 8 }} />
                     <span className="is-size-7">
-                      Verifica que la ubicación coincida con la etiqueta física del libro.
+                      Verifica que la ubicación coincida con la etiqueta física
+                      del libro.
                     </span>
                   </div>
                 </div>

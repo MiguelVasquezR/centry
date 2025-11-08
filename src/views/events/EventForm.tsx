@@ -11,6 +11,7 @@ import { useCreateEventMutation } from "@/src/redux/store/api/eventApi";
 import { EventFormValues } from "@/src/types/event";
 import toast from "react-hot-toast";
 import Loader from "@/src/component/Loader";
+import PageHeader from "@/src/component/PageHeader";
 import type { Category } from "@/src/types/category";
 
 const fallbackCategories: Category[] = [
@@ -40,10 +41,8 @@ const fallbackCategories: Category[] = [
 const EventForm = () => {
   const router = useRouter();
 
-  const {
-    data: categoriesData = [],
-    isLoading: isLoadingCategory,
-  } = useGetCategoriesQuery(undefined);
+  const { data: categoriesData = [], isLoading: isLoadingCategory } =
+    useGetCategoriesQuery(undefined);
 
   const eventCategories = (categoriesData ?? []).filter(
     (category: Category) => category.type === "event"
@@ -102,7 +101,12 @@ const EventForm = () => {
 
   return (
     <section className="section" style={{ paddingTop: "2rem" }}>
+      <br />
       <div className="container">
+        <PageHeader
+          title="Registrar evento"
+          description="Define el encuentro y compártelo en la agenda comunitaria."
+        />
         <form className="box shadowed-form" onSubmit={handleSubmit(onSubmit)}>
           <div className="columns is-variable is-6">
             <div className="column is-8">
@@ -145,19 +149,19 @@ const EventForm = () => {
 
               <div className="columns">
                 <div className="column is-6">
-              <div className="field">
-                <label htmlFor="type" className="label">
-                  Tipo de evento *
-                </label>
-                <div
-                  className={`control ${errors.type ? "is-danger" : ""}`}
-                >
-                  <div className="select is-fullwidth">
-                    <select
-                      id="type"
-                      defaultValue={defaultCategoryValue}
-                      {...register("type")}
+                  <div className="field">
+                    <label htmlFor="type" className="label">
+                      Tipo de evento *
+                    </label>
+                    <div
+                      className={`control ${errors.type ? "is-danger" : ""}`}
                     >
+                      <div className="select is-fullwidth">
+                        <select
+                          id="type"
+                          defaultValue={defaultCategoryValue}
+                          {...register("type")}
+                        >
                           {categoryOptions.map((option: Category) => (
                             <option
                               key={option.id ?? option.title}
