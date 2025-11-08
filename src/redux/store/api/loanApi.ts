@@ -12,10 +12,17 @@ export const loanApi = apiSlice.injectEndpoints({
         method: "POST",
         body: loan,
       }),
-      invalidatesTags: (result, error, loan) => [
-        "loan",
-        { type: "loan", id: `book-${loan.bookId}` },
-      ],
+      invalidatesTags: (result, error, loan) => {
+        const tags: { type: "loan"; id?: string }[] = [
+          { type: "loan", id: "LIST" },
+        ];
+
+        if (loan.bookId) {
+          tags.push({ type: "loan", id: `book-${loan.bookId}` });
+        }
+
+        return tags;
+      },
     }),
     getLoans: build.query<Loan[], void>({
       query: () => ({
@@ -23,7 +30,7 @@ export const loanApi = apiSlice.injectEndpoints({
         method: "GET",
       }),
       transformResponse: (response: { data?: Loan[] }) => response?.data ?? [],
-      providesTags: ["loan"],
+      providesTags: [{ type: "loan", id: "LIST" }],
     }),
     getLoansByBook: build.query<Loan[], string>({
       query: (bookId) => ({
@@ -33,7 +40,7 @@ export const loanApi = apiSlice.injectEndpoints({
       transformResponse: (response: { data?: Loan[] }) => response?.data ?? [],
       providesTags: (result, error, bookId) => [
         { type: "loan", id: `book-${bookId}` },
-        "loan",
+        { type: "loan", id: "LIST" },
       ],
     }),
     updateLoan: build.mutation<
@@ -45,11 +52,21 @@ export const loanApi = apiSlice.injectEndpoints({
         method: "PUT",
         body: { id, ...data },
       }),
-      invalidatesTags: (result, error, { bookId, id }) => [
-        "loan",
-        { type: "loan", id: `book-${bookId ?? "unknown"}` },
-        id ? { type: "loan", id } : undefined,
-      ].filter(Boolean) as { type: string; id?: string }[],
+      invalidatesTags: (result, error, { bookId, id }) => {
+        const tags: { type: "loan"; id?: string }[] = [
+          { type: "loan", id: "LIST" },
+        ];
+
+        if (bookId) {
+          tags.push({ type: "loan", id: `book-${bookId}` });
+        }
+
+        if (id) {
+          tags.push({ type: "loan", id });
+        }
+
+        return tags;
+      },
     }),
   }),
 });

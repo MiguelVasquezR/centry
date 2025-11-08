@@ -50,28 +50,32 @@ const BookLibraryView = () => {
     setPage(newPage);
   };
 
-  const categories = Array.from(
-    new Set(
-      books
-        .map((book: Book) => book.tipo?.trim())
-        .filter((value): value is string => Boolean(value))
-    )
-  ).sort((a, b) => a.localeCompare(b));
+  const categorySet = new Set<string>(
+    books
+      .map((book: Book) => book.tipo?.trim())
+      .filter(
+        (value: string | undefined | null): value is string => Boolean(value)
+      )
+  );
+  const categories = Array.from(categorySet).sort((a, b) =>
+    a.localeCompare(b)
+  );
 
-  const shelves = Array.from(
-    new Set(
-      books
-        .map((book: Book) => {
-          const shelf =
-            book.ubicacion?.repisa ??
-            book.ubicacion?.respisa ??
-            book.ubicacion?.row ??
-            "";
-          return typeof shelf === "number" ? String(shelf) : shelf?.toString();
-        })
-        .filter((value): value is string => Boolean(value))
-    )
-  ).sort((a, b) => a.localeCompare(b));
+  const shelfSet = new Set<string>(
+    books
+      .map((book: Book) => {
+        const shelf =
+          book.ubicacion?.repisa ??
+          book.ubicacion?.respisa ??
+          book.ubicacion?.row ??
+          "";
+        return typeof shelf === "number" ? String(shelf) : shelf?.toString();
+      })
+      .filter(
+        (value: string | undefined | null): value is string => Boolean(value)
+      )
+  );
+  const shelves = Array.from(shelfSet).sort((a, b) => a.localeCompare(b));
 
   const filteredBooks = books.filter((book: Book) => {
     const title = (book.titulo ?? "").toLowerCase();

@@ -14,6 +14,7 @@ import {
 } from "firebase/firestore";
 import { firestore } from "./app";
 import { FieldValues } from "react-hook-form";
+import type { PostComment } from "@/src/types/comment";
 
 const toMillis = (value: unknown): number => {
   if (!value) {
@@ -255,10 +256,13 @@ export const getCommentsByPostId = async (postId: string) => {
     const commentsQuery = query(commentsRef, where("postId", "==", postId));
     const snapshot = await getDocs(commentsQuery);
 
-    const comments = snapshot.docs.map((docSnap) => ({
-      id: docSnap.id,
-      ...docSnap.data(),
-    }));
+    const comments = snapshot.docs.map((docSnap) => {
+      const data = docSnap.data() as PostComment;
+      return {
+        id: docSnap.id,
+        ...data,
+      };
+    });
 
     return comments.sort(
       (a, b) => toMillis(a.createdAt) - toMillis(b.createdAt)
