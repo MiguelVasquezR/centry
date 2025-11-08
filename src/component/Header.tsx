@@ -203,9 +203,11 @@ const Header = () => {
           >
             Biblioteca
           </li>
-          <li className="navbar-item is-clickable has-text-white is-underlined has-text-weight-bold">
+          <li
+            onClick={() => router.push("/movies")}
+            className="navbar-item is-clickable has-text-white is-underlined has-text-weight-bold"
+          >
             Películas
-            <Link href={"#"} />
           </li>
       </ul>
       )}

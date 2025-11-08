@@ -76,7 +76,10 @@ export const getDataPagination = async (
     const pageSize =
       Number.isFinite(limitCount) && limitCount > 0 ? limitCount : 10;
     const currentPage = Number.isFinite(page) && page > 0 ? page : 1;
-    const orderField = collectionName === "libros" ? "titulo" : "title";
+    const orderField =
+      collectionName === "libros" || collectionName === "movies"
+        ? "titulo"
+        : "title";
 
     // Total de documentos
     const countSnapshot = await getDocs(colRef);
