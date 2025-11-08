@@ -222,6 +222,26 @@ export const getPostsByBook = async (bookId: string) => {
   }
 };
 
+export const getLoansByBookId = async (bookId: string) => {
+  try {
+    if (!bookId) {
+      return [];
+    }
+
+    const loansRef = collection(firestore, "prestamos");
+    const loansQuery = query(loansRef, where("bookId", "==", bookId));
+    const snapshot = await getDocs(loansQuery);
+
+    return snapshot.docs.map((docSnap) => ({
+      id: docSnap.id,
+      ...docSnap.data(),
+    }));
+  } catch (error) {
+    console.error("Error al obtener préstamos por libro:", error);
+    return [];
+  }
+};
+
 export const getCommentsByPostId = async (postId: string) => {
   try {
     if (!postId) {

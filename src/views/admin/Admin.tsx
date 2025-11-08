@@ -1,27 +1,89 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Book, CalendarClock } from "lucide-react";
 import CategoryCard from "@/src/component/CategoryCard";
 import LoanCard from "@/src/component/LoanCard";
 import Loader from "@/src/component/Loader";
 import { useGetCategoriesQuery } from "@/src/redux/store/api/category";
-import { useGetLoansQuery } from "@/src/redux/store/api/loanApi";
+import {
+  useGetLoansQuery,
+  useUpdateLoanMutation,
+} from "@/src/redux/store/api/loanApi";
 import type { Category } from "@/src/types/category";
 import type { Loan } from "@/src/types/loan";
+import toast from "react-hot-toast";
 
 const AdminDashboard = () => {
-  const { data: categoriesData = [], isLoading: isLoadingCategories, isFetching: isFetchingCategories } =
+  const { data: categoriesData = [], isLoading: isLoadingCategories } =
     useGetCategoriesQuery(undefined);
-  const { data: loansData = [], isLoading: isLoadingLoans, isFetching: isFetchingLoans } = useGetLoansQuery();
+  const {
+    data: loansData = [],
+    isLoading: isLoadingLoans,
+  } = useGetLoansQuery();
 
   const loans = useMemo(() => loansData as Loan[], [loansData]);
+  const [updateLoan] = useUpdateLoanMutation();
+  const [processingLoanId, setProcessingLoanId] = useState<string | null>(null);
+  const [processingAction, setProcessingAction] = useState<
+    "approve" | "reject" | null
+  >(null);
 
-  const isLoading =
-    isLoadingCategories || isLoadingLoans || isFetchingCategories || isFetchingLoans;
+  const [hasLoadedInitialData, setHasLoadedInitialData] = useState(false);
 
-  if (isLoading) {
+  useEffect(() => {
+    if (!hasLoadedInitialData && !isLoadingCategories && !isLoadingLoans) {
+      setHasLoadedInitialData(true);
+    }
+  }, [hasLoadedInitialData, isLoadingCategories, isLoadingLoans]);
+
+  const isInitialLoading = !hasLoadedInitialData;
+
+  const handleLoanStatusChange = async (
+    loan: Loan,
+    status: Loan["status"],
+    action: "approve" | "reject"
+  ) => {
+    if (!loan.id) {
+      toast.error("No pudimos identificar el préstamo.");
+      return;
+    }
+
+    try {
+      setProcessingLoanId(loan.id);
+      setProcessingAction(action);
+      const response = await updateLoan({
+        id: loan.id,
+        bookId: loan.bookId,
+        status,
+      }).unwrap();
+
+      if (response.status === 200) {
+        toast.success(
+          status === "active"
+            ? "Solicitud aprobada correctamente."
+            : "Solicitud rechazada."
+        );
+      } else {
+        toast.error("No se pudo actualizar el préstamo.");
+      }
+    } catch (error) {
+      console.error("Error actualizando préstamo:", error);
+      toast.error("Ocurrió un error al actualizar el préstamo.");
+    } finally {
+      setProcessingLoanId(null);
+      setProcessingAction(null);
+    }
+  };
+
+  const handleApproveLoan = (loan: Loan) =>
+    handleLoanStatusChange(loan, "active", "approve");
+
+  const handleRejectLoan = (loan: Loan) =>
+    handleLoanStatusChange(loan, "rejected", "reject");
+
+  if (isInitialLoading) {
     return <Loader />;
   }
 
@@ -111,7 +173,16 @@ const AdminDashboard = () => {
 
               <div className="is-flex is-flex-direction-column is-gap-3">
                 {loans.length ? (
-                  loans.map((loan) => <LoanCard key={loan.id} loan={loan} />)
+                  loans.map((loan) => (
+                    <LoanCard
+                      key={loan.id}
+                      loan={loan}
+                      onApprove={loan.status === "requested" ? handleApproveLoan : undefined}
+                      onReject={loan.status === "requested" ? handleRejectLoan : undefined}
+                      isProcessing={processingLoanId === loan.id}
+                      processingAction={processingAction}
+                    />
+                  ))
                 ) : (
                   <div className="notification is-light">
                     No hay préstamos registrados por el momento.
