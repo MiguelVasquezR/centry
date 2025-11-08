@@ -33,7 +33,7 @@ const CardBook = ({ book }: { book: Book }) => {
 
   return (
     <div
-      className="card p-5 is-relative is-clickable"
+      className="card book-card p-5 is-relative is-clickable"
       onClick={(e) => {
         e.stopPropagation();
         e.preventDefault();

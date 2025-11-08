@@ -4,6 +4,9 @@
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   border-radius: 8px;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 .book-card:hover {
@@ -37,10 +40,100 @@
   background-color: rgba(0, 123, 255, 0.1);
 }
 
+/* Header / navigation responsiveness */
+.navbar.is-primary {
+  box-shadow: 0 10px 30px rgba(3, 7, 18, 0.15);
+}
+
+.navbar .brand-button {
+  background: transparent;
+  border: none;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+}
+
+.navbar .brand-button:focus-visible,
+.navbar-item-search .input:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.6);
+  outline-offset: 2px;
+}
+
+.navbar-item-search {
+  flex: 1;
+  min-width: 260px;
+}
+
+.navbar-item-search .control,
+.navbar-item-search .input {
+  width: 100%;
+}
+
+.navbar-menu {
+  width: 100%;
+}
+
+@media screen and (max-width: 1023px) {
+  .navbar-menu {
+    padding: 1rem 0;
+  }
+
+  .navbar-menu .navbar-item {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .navbar-end {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  .navbar-item .dropdown-menu {
+    position: static !important;
+  }
+
+  .navbar-item-search {
+    width: 100%;
+  }
+}
+
+@media screen and (min-width: 1024px) {
+  .navbar-item-search {
+    max-width: 420px;
+    margin-right: 1rem;
+  }
+}
+
 /* Search and filter section styling */
 .box {
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.filters-panel {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  align-items: end;
+}
+
+.filters-panel__item {
+  width: 100%;
+}
+
+.filters-panel__item .select,
+.filters-panel__item .input {
+  width: 100%;
+}
+
+.book-grid {
+  display: grid;
+  gap: 1.25rem;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  width: 100%;
 }
 
 /* Pagination styling */
@@ -293,6 +386,10 @@
   .book-card .title.is-7 {
     font-size: 0.8rem;
   }
+
+  .filters-panel {
+    grid-template-columns: 1fr;
+  }
 }
 
 .fc-col-header-cell-cushion,
@@ -313,4 +410,3 @@
   background-color: transparent !important;
   border: none !important;
 }
-

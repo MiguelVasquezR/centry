@@ -117,79 +117,94 @@ const BookLibraryView = () => {
         }
       />
 
-      <div className="box">
-        <div className="columns">
-          <div className="column">
-            <input
-              type="text"
-              className="input"
-              placeholder="Buscar por título o autor"
-              value={searchTerm}
+      <div className="box filters-panel">
+        <div className="filters-panel__item">
+          <label className="label is-size-7 has-text-weight-semibold has-text-grey mb-1">
+            Buscar
+          </label>
+          <input
+            type="text"
+            className="input"
+            placeholder="Buscar por título o autor"
+            value={searchTerm}
+            onChange={(event) => {
+              setSearchTerm(event.target.value);
+              setPage(1);
+            }}
+          />
+        </div>
+
+        <div className="filters-panel__item">
+          <label className="label is-size-7 has-text-weight-semibold has-text-grey mb-1">
+            Categoría
+          </label>
+          <div className="select is-fullwidth">
+            <select
+              value={selectedCategory}
               onChange={(event) => {
-                setSearchTerm(event.target.value);
+                setSelectedCategory(event.target.value);
                 setPage(1);
               }}
-            />
+            >
+              <option value="">Todas las categorías</option>
+              {categories.map((category) => (
+                <option key={category} value={category}>
+                  {category}
+                </option>
+              ))}
+            </select>
           </div>
+        </div>
 
-          <div className="column is-4">
-            <div className="select mx-2">
-              <select
-                value={selectedCategory}
-                onChange={(event) => {
-                  setSelectedCategory(event.target.value);
-                  setPage(1);
-                }}
-              >
-                <option value="">Todas las categorías</option>
-                {categories.map((category) => (
-                  <option key={category} value={category}>
-                    {category}
+        <div className="filters-panel__item">
+          <label className="label is-size-7 has-text-weight-semibold has-text-grey mb-1">
+            Repisa
+          </label>
+          <div className="select is-fullwidth">
+            <select
+              value={selectedShelf}
+              onChange={(event) => {
+                setSelectedShelf(event.target.value);
+                setPage(1);
+              }}
+            >
+              <option value="">Todas las repisas</option>
+              {shelves.map((shelf) => (
+                <option key={shelf} value={shelf}>
+                  {shelf}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div className="filters-panel__item">
+          <label className="label is-size-7 has-text-weight-semibold has-text-grey mb-1">
+            Resultados por página
+          </label>
+          <div className="select is-fullwidth">
+            <select
+              value={limit}
+              onChange={(e) => {
+                const newLimit = parseInt(e.currentTarget.value, 10);
+                setLimit(newLimit);
+                setPage(1);
+              }}
+            >
+              {Array.from({ length: 10 }, (_, i) => i + 1) // 1 al 10
+                .concat(Array.from({ length: 9 }, (_, i) => (i + 2) * 10)) // 20 al 100
+                .map((num) => (
+                  <option key={num} value={num}>
+                    {num}
                   </option>
                 ))}
-              </select>
-            </div>
-
-            <div className="select mx-2">
-              <select
-                value={selectedShelf}
-                onChange={(event) => {
-                  setSelectedShelf(event.target.value);
-                  setPage(1);
-                }}
-              >
-                <option value="">Todas las repisas</option>
-                {shelves.map((shelf) => (
-                  <option key={shelf} value={shelf}>
-                    {shelf}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="select mx-2">
-              <select
-                onChange={(e) => {
-                  e.preventDefault();
-                  setLimit(parseInt(e.currentTarget.value));
-                }}
-                defaultValue={20}
-              >
-                {Array.from({ length: 10 }, (_, i) => i + 1) // 1 al 10
-                  .concat(Array.from({ length: 9 }, (_, i) => (i + 2) * 10)) // 20 al 100
-                  .map((num) => (
-                    <option key={num} value={num}>
-                      {num}
-                    </option>
-                  ))}
-              </select>
-            </div>
+            </select>
           </div>
         </div>
       </div>
 
       <div className="fixed-grid has-4-cols">
-        <div className="grid ">
+        <div className="grid book-grid">
           {filteredBooks.length ? (
             filteredBooks.map((book: Book) => (
               <CardBook key={book.id} book={book} />

@@ -3,7 +3,7 @@
 import { LogIn, LogOut, Search as SearchIcon, User } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/src/firebase/contexts/AuthContext";
 import { signOutUser } from "@/src/firebase/auth";
 import toast from "react-hot-toast";
@@ -19,8 +19,10 @@ import { useLazySearchEntitiesQuery } from "../redux/store/api/searchApi";
 
 const Header = () => {
   const router = useRouter();
+  const pathname = usePathname();
   const { user, isAuthenticated } = useAuth();
   const [userMenuActive, setUserMenuActive] = useState<boolean>(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const userId = localStorage.getItem("userId") || "";
 
@@ -64,6 +66,11 @@ const Header = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    setIsMenuOpen(false);
+    setUserMenuActive(false);
+  }, [pathname]);
+
   const normalizedResults = useMemo(() => {
     if (!hasMinChars || !searchData) {
       return { books: [], users: [], movies: [] };
@@ -78,6 +85,23 @@ const Header = () => {
 
   const shouldShowPanel =
     isAuthenticated && (isSearchFocused || trimmedSearchTerm.length > 0);
+
+  const closeMenus = () => {
+    setIsMenuOpen(false);
+    setUserMenuActive(false);
+  };
+
+  const navigateAndClose = (path: string) => {
+    closeMenus();
+    router.push(path);
+  };
+
+  const navigationLinks = [
+    { label: "Publicaciones", href: "/updates" },
+    { label: "Usuarios", href: "/users" },
+    { label: "Biblioteca", href: "/book" },
+    { label: "Películas", href: "/movies" },
+  ];
 
   const bookItems = normalizedResults.books.map((book) => ({
     id: book.id ?? book.titulo,
@@ -144,6 +168,7 @@ const Header = () => {
   );
 
   const handleResultNavigation = (path: string) => {
+    closeMenus();
     router.push(path);
     setSearchTerm("");
     setIsSearchFocused(false);
@@ -157,7 +182,7 @@ const Header = () => {
       } else {
         deleteCookie("userEmail", { path: "/" });
         toast.success("Sesión cerrada exitosamente");
-        router.push("/login");
+        navigateAndClose("/login");
       }
   } catch (error) {
     console.error("Error al cerrar sesión:", error);
@@ -166,183 +191,215 @@ const Header = () => {
 };
 
   return (
-    <nav className="navbar is-primary is-fixed-top p-2">
-      <div className="navbar-brand" onClick={() => router.push("/")}>
-        <Image
-          src={
-            "https://res.cloudinary.com/dvt4vznxn/image/upload/v1758752392/descarga_15829f93a9a231_500h_l2rg9i.png"
-          }
-          alt="logo"
-          className="image is-64x64"
-          width={64}
-          height={64}
-          style={{ borderRadius: 12 }}
-        />
-        <p className="navbar-item has-text-white is-size-5 has-text-weight-bold">
-          Documental
-        </p>
-      </div>
+    <nav
+      className="navbar is-primary is-fixed-top p-2"
+      role="navigation"
+      aria-label="Barra principal"
+    >
+      <div className="container is-fluid">
+        <div className="navbar-brand">
+          <button
+            type="button"
+            className="navbar-item brand-button"
+            onClick={() => navigateAndClose("/")}
+          >
+            <Image
+              src={
+                "https://res.cloudinary.com/dvt4vznxn/image/upload/v1758752392/descarga_15829f93a9a231_500h_l2rg9i.png"
+              }
+              alt="logo"
+              className="image is-64x64"
+              width={64}
+              height={64}
+              style={{ borderRadius: 12 }}
+            />
+            <span className="has-text-white is-size-5 has-text-weight-bold">
+              Documental
+            </span>
+          </button>
 
-      {isAuthenticated && (
-        <ul className="navbar-menu">
-          <li
-            onClick={() => router.push("/updates")}
-            className="navbar-item is-clickable has-text-white is-underlined has-text-weight-bold"
+          <button
+            type="button"
+            className={clsx("navbar-burger", { "is-active": isMenuOpen })}
+            aria-label="Abrir menú"
+            aria-expanded={isMenuOpen}
+            aria-controls="primary-navigation"
+            onClick={() => setIsMenuOpen((prev) => !prev)}
           >
-            Publicaciones
-          </li>
-          <li
-            onClick={() => router.push("/users")}
-            className="navbar-item is-clickable has-text-white is-underlined has-text-weight-bold"
-          >
-            Usuarios
-          </li>
-          <li
-            onClick={() => router.push("/book")}
-            className="navbar-item is-clickable has-text-white is-underlined has-text-weight-bold"
-          >
-            Biblioteca
-          </li>
-          <li
-            onClick={() => router.push("/movies")}
-            className="navbar-item is-clickable has-text-white is-underlined has-text-weight-bold"
-          >
-            Películas
-          </li>
-      </ul>
-      )}
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+          </button>
+        </div>
 
-      <div className="navbar-end">
-        <div className="navbar-item">
-          {isAuthenticated && (
-            <div
-              ref={searchContainerRef}
-              className="is-relative"
-              style={{ width: "320px", maxWidth: "100%" }}
-            >
-              <div className="control has-icons-left">
-                <input
-                  type="text"
-                  className="input"
-                  placeholder="Buscar libros, usuarios o películas"
-                  value={searchTerm}
-                  onChange={(event) => setSearchTerm(event.target.value)}
-                  onFocus={() => setIsSearchFocused(true)}
-                  onKeyDown={(event) => {
-                    if (event.key === "Escape") {
-                      setSearchTerm("");
-                      setIsSearchFocused(false);
-                    }
-                  }}
-                  autoComplete="off"
-                />
-                <span className="icon is-left">
-                  <SearchIcon size={18} />
-                </span>
-              </div>
-              {shouldShowPanel && (
+        <div
+          id="primary-navigation"
+          className={clsx("navbar-menu", { "is-active": isMenuOpen })}
+        >
+          <div className="navbar-start">
+            {isAuthenticated &&
+              navigationLinks.map((item) => {
+                const isActive = pathname?.startsWith(item.href);
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={clsx(
+                      "navbar-item has-text-white has-text-weight-semibold",
+                      { "is-active": isActive }
+                    )}
+                    onClick={closeMenus}
+                  >
+                    {item.label}
+                  </Link>
+                );
+              })}
+          </div>
+
+          <div className="navbar-end is-align-items-center">
+            {isAuthenticated && (
+              <div className="navbar-item navbar-item-search is-flex-grow-1">
                 <div
-                  className="box"
-                  style={{
-                    position: "absolute",
-                    top: "110%",
-                    left: 0,
-                    width: "100%",
-                    minWidth: "260px",
-                    maxWidth: "420px",
-                    maxHeight: "420px",
-                    overflowY: "auto",
-                    borderRadius: "16px",
-                    boxShadow: "0 12px 32px rgba(15, 23, 42, 0.18)",
-                    zIndex: 40,
-                  }}
+                  ref={searchContainerRef}
+                  className="is-relative"
+                  style={{ width: "100%" }}
                 >
-                  {notEnoughCharacters ? (
-                    <p className="is-size-7 has-text-grey mb-0">
-                      Escribe al menos 2 caracteres para buscar.
-                    </p>
-                  ) : isSearching ? (
-                    <p className="is-size-7 has-text-grey mb-0">
-                      Buscando resultados…
-                    </p>
-                  ) : (
-                    <>
-                      {showNoResultsState && (
-                        <p className="is-size-7 has-text-grey mb-4">
-                          No encontramos coincidencias para “{trimmedSearchTerm}”.
+                  <div className="control has-icons-left">
+                    <input
+                      type="text"
+                      className="input"
+                      placeholder="Buscar libros, usuarios o películas"
+                      value={searchTerm}
+                      onChange={(event) => setSearchTerm(event.target.value)}
+                      onFocus={() => setIsSearchFocused(true)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Escape") {
+                          setSearchTerm("");
+                          setIsSearchFocused(false);
+                        }
+                      }}
+                      autoComplete="off"
+                    />
+                    <span className="icon is-left">
+                      <SearchIcon size={18} />
+                    </span>
+                  </div>
+                  {shouldShowPanel && (
+                    <div
+                      className="box"
+                      style={{
+                        position: "absolute",
+                        top: "110%",
+                        left: 0,
+                        width: "100%",
+                        minWidth: "260px",
+                        maxWidth: "420px",
+                        maxHeight: "420px",
+                        overflowY: "auto",
+                        borderRadius: "16px",
+                        boxShadow: "0 12px 32px rgba(15, 23, 42, 0.18)",
+                        zIndex: 40,
+                      }}
+                    >
+                      {notEnoughCharacters ? (
+                        <p className="is-size-7 has-text-grey mb-0">
+                          Escribe al menos 2 caracteres para buscar.
                         </p>
+                      ) : isSearching ? (
+                        <p className="is-size-7 has-text-grey mb-0">
+                          Buscando resultados…
+                        </p>
+                      ) : (
+                        <>
+                          {showNoResultsState && (
+                            <p className="is-size-7 has-text-grey mb-4">
+                              No encontramos coincidencias para “
+                              {trimmedSearchTerm}”.
+                            </p>
+                          )}
+                          {renderResultsSection("Libros", bookItems)}
+                          {renderResultsSection("Usuarios", userItems)}
+                          {renderResultsSection("Películas", movieItems)}
+                        </>
                       )}
-                      {renderResultsSection("Libros", bookItems)}
-                      {renderResultsSection("Usuarios", userItems)}
-                      {renderResultsSection("Películas", movieItems)}
-                    </>
+                    </div>
                   )}
                 </div>
+              </div>
+            )}
+
+            <div className="navbar-item">
+              {isAuthenticated ? (
+                <div
+                  onClick={() => {
+                    setUserMenuActive(!userMenuActive);
+                  }}
+                  className="is-flex is-justify-content-center is-align-items-center is-gap-2 is-clickable user-menu-trigger"
+                >
+                  <div
+                    className={clsx("dropdown", { "is-active": userMenuActive })}
+                  >
+                    <div className="dropdown-trigger">
+                      <div className="is-flex is-justify-content-center is-align-items-center is-gap-1">
+                        <User color="white" size={20} />
+                        <p className="has-text-white" style={{ fontSize: 12 }}>
+                          {user?.displayName || user?.email}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="dropdown-menu" id="dropdown-menu" role="menu">
+                      <div className="dropdown-content">
+                        <Link
+                          className={clsx("dropdown-item", {
+                            "is-hidden": rol !== "admin",
+                          })}
+                          href={"/admin"}
+                          onClick={closeMenus}
+                        >
+                          Administración
+                        </Link>
+                        <Link
+                          className="dropdown-item"
+                          href={"/events"}
+                          onClick={closeMenus}
+                        >
+                          Calendario
+                        </Link>
+                        <Link
+                          className="dropdown-item"
+                          href={`/users/${userId}`}
+                          onClick={closeMenus}
+                        >
+                          Mi perfil
+                        </Link>
+                        <hr className="dropdown-divider" />
+
+                        <Link
+                          className=" dropdown-item
+                      is-flex is-justify-content-center is-align-items-center is-gap-2 is-clickable"
+                          type="button"
+                          onClick={handleLogout}
+                          href={"/login"}
+                        >
+                          <LogOut color="black" size={20} />
+                          <p>Cerrar Sesión</p>
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => navigateAndClose("/login")}
+                  className="button is-text has-text-white is-flex is-align-items-center is-gap-2"
+                >
+                  <LogIn color="white" size={20} />
+                  <span style={{ fontSize: 12 }}>Iniciar Sesión</span>
+                </button>
               )}
             </div>
-          )}
-
-          {isAuthenticated ? (
-            <div
-              onClick={() => {
-                setUserMenuActive(!userMenuActive);
-              }}
-              className="is-flex is-justify-content-center is-align-items-center is-gap-2 is-clickable mr-5"
-            >
-              <div
-                className={clsx("dropdown", { "is-active": userMenuActive })}
-              >
-                <div className="dropdown-trigger">
-                  <div className="is-flex is-justify-content-center is-align-items-center is-gap-1">
-                    <User color="white" size={20} />
-                    <p className="has-text-white" style={{ fontSize: 12 }}>
-                      {user?.displayName || user?.email}
-                    </p>
-                  </div>
-                </div>
-                <div className="dropdown-menu" id="dropdown-menu" role="menu">
-                  <div className="dropdown-content">
-                    <Link
-                      className={clsx("dropdown-item", {
-                        "is-hidden": rol !== "admin",
-                      })}
-                      href={"/admin"}
-                    >
-                      Administración
-                    </Link>
-                    <Link className="dropdown-item" href={"/events"}>
-                      Calendario
-                    </Link>
-                    <Link className="dropdown-item" href={`users/${userId}`}>
-                      Mi perfil
-                    </Link>
-                    <hr className="dropdown-divider" />
-
-                    <Link
-                      className=" dropdown-item
-                      is-flex is-justify-content-center is-align-items-center is-gap-2 is-clickable"
-                      type="button"
-                      onClick={handleLogout}
-                      href={"/login"}
-                    >
-                      <LogOut color="black" size={20} />
-                      <p>Cerrar Sesión</p>
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div
-              onClick={() => router.push("/login")}
-              className="is-flex is-justify-content-center is-align-items-center is-gap-2 is-clickable"
-            >
-              <LogIn color="white" size={20} />
-              <p className="has-text-white" style={{ fontSize: 10 }}>
-                Iniciar Sesión
-              </p>
-            </div>
-          )}
+          </div>
         </div>
       </div>
     </nav>
