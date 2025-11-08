@@ -15,6 +15,43 @@ import {
 import { firestore } from "./app";
 import { FieldValues } from "react-hook-form";
 
+const toMillis = (value: unknown): number => {
+  if (!value) {
+    return 0;
+  }
+
+  if (typeof value === "number") {
+    return value;
+  }
+
+  if (value instanceof Date) {
+    return value.getTime();
+  }
+
+  if (typeof value === "string") {
+    const parsed = Date.parse(value);
+    if (!Number.isNaN(parsed)) {
+      return parsed;
+    }
+    const fromISO = Date.parse(`${value}`);
+    return Number.isNaN(fromISO) ? 0 : fromISO;
+  }
+
+  if (
+    typeof value === "object" &&
+    value !== null &&
+    "seconds" in value &&
+    typeof (value as { seconds?: unknown }).seconds === "number"
+  ) {
+    const timestamp = value as { seconds?: number; nanoseconds?: number };
+    const seconds = timestamp.seconds ?? 0;
+    const nanos = timestamp.nanoseconds ?? 0;
+    return seconds * 1000 + Math.floor(nanos / 1_000_000);
+  }
+
+  return 0;
+};
+
 export const writeData = async (collectionName: string, data: FieldValues) => {
   try {
     const docRef = await addDoc(collection(firestore, collectionName), data);
@@ -181,6 +218,30 @@ export const getPostsByBook = async (bookId: string) => {
     }));
   } catch (error) {
     console.error("Error al obtener posts por libro:", error);
+    return [];
+  }
+};
+
+export const getCommentsByPostId = async (postId: string) => {
+  try {
+    if (!postId) {
+      return [];
+    }
+
+    const commentsRef = collection(firestore, "comments");
+    const commentsQuery = query(commentsRef, where("postId", "==", postId));
+    const snapshot = await getDocs(commentsQuery);
+
+    const comments = snapshot.docs.map((docSnap) => ({
+      id: docSnap.id,
+      ...docSnap.data(),
+    }));
+
+    return comments.sort(
+      (a, b) => toMillis(a.createdAt) - toMillis(b.createdAt)
+    );
+  } catch (error) {
+    console.error("Error al obtener comentarios por post:", error);
     return [];
   }
 };

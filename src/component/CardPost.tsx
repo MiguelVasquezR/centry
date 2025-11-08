@@ -13,6 +13,7 @@ import { useUpdatePostMutation } from "../redux/store/api/postsApi";
 import { useLazyGetUserByIdQuery } from "../redux/store/api/usersApi";
 import { User } from "../types/user";
 import CardPostSkeleton from "./CardPostSkeleton";
+import { useGetCommentsByPostQuery } from "../redux/store/api/commentsApi";
 
 const CardPost = ({ post }: { post: PostListItem }) => {
   const coverImage = post.imageUrl?.[0] || fallbackCover;
@@ -20,7 +21,21 @@ const CardPost = ({ post }: { post: PostListItem }) => {
   const readingMinutes = getReadingTime(post.content || "");
   const reactions = post.reactions?.length ?? 0;
   const readings = post.readings?.length ?? 0;
-  const comments = Math.max(0, Math.round(reactions / 3));
+  const {
+    data: commentsData,
+    isFetching: isFetchingComments,
+    isLoading: isLoadingComments,
+    isError: isCommentsError,
+  } = useGetCommentsByPostQuery(post.id ?? "", {
+    skip: !post.id,
+  });
+  const comments = commentsData?.length ?? 0;
+  const isCommentsLoadingState = isLoadingComments || isFetchingComments;
+  const commentCountLabel = isCommentsError
+    ? "No disponible"
+    : isCommentsLoadingState
+      ? "Cargando..."
+      : `${comments} comentario${comments === 1 ? "" : "s"}`;
   const authorInitial = post.authorId?.[0]?.toUpperCase() ?? "A";
   const visibilityLabel =
     post.preference?.visibleBy === "general"
@@ -234,7 +249,7 @@ const CardPost = ({ post }: { post: PostListItem }) => {
           <div className="is-flex is-align-items-center is-gap-1">
             <MessageCircle size={18} />
             <span className="is-size-7 has-text-weight-semibold">
-              {comments} comentarios
+              {commentCountLabel}
             </span>
           </div>
           <div className="is-flex is-align-items-center is-gap-1">

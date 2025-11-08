@@ -3,6 +3,15 @@ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 // Define our single API slice object
 export const apiSlice = createApi({
   baseQuery: fetchBaseQuery({ baseUrl: "/api" }),
-  tagTypes: ["books", "movies", "posts", "users", "category", "event", "loan"],
+  tagTypes: [
+    "books",
+    "movies",
+    "posts",
+    "users",
+    "category",
+    "event",
+    "loan",
+    "comments",
+  ],
   endpoints: () => ({}),
 });

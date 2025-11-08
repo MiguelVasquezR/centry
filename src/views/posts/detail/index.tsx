@@ -10,9 +10,20 @@ import {
 } from "@/src/redux/store/api/postsApi";
 import { ChevronLeft, BookOpen, Eye, Heart } from "lucide-react";
 import type { FirestoreTimestamp } from "@/src/types/postList";
-import { useLazyGetUserByIdQuery } from "@/src/redux/store/api/usersApi";
+import {
+  useGetCurrentUserQuery,
+  useLazyGetUserByIdQuery,
+} from "@/src/redux/store/api/usersApi";
 import { useEffect, useState } from "react";
 import { User } from "@/src/types/user";
+import {
+  useCreateCommentMutation,
+  useDeleteCommentMutation,
+  useGetCommentsByPostQuery,
+  useUpdateCommentMutation,
+} from "@/src/redux/store/api/commentsApi";
+import type { PostComment } from "@/src/types/comment";
+import GeneralModal from "@/src/component/GeneralModal";
 
 const coerceDateTime = (value: unknown): DateTime | null => {
   if (!value) return null;
@@ -58,6 +69,13 @@ const formatDate = (value: unknown) => {
   }`;
 };
 
+const formatCommentDate = (value: unknown) => {
+  const datetime = coerceDateTime(value)?.setLocale("es");
+  if (!datetime || !datetime.isValid) return "";
+
+  return datetime.toFormat("dd 'de' MMM yyyy, HH:mm");
+};
+
 const sanitizeHTML = (html: string) => {
   if (typeof window === "undefined") {
     return html;
@@ -72,6 +90,14 @@ const PostDetailView = () => {
   const router = useRouter();
   const postId = typeof params?.id === "string" ? params.id : "";
   const [authorPost, setAuthorPost] = useState<User>();
+  const [localUserId, setLocalUserId] = useState("");
+  const [newComment, setNewComment] = useState("");
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [editingContent, setEditingContent] = useState("");
+  const [commentError, setCommentError] = useState<string | null>(null);
+  const [commentInActionId, setCommentInActionId] = useState<string | null>(null);
+  const [commentPendingDelete, setCommentPendingDelete] =
+    useState<PostComment | null>(null);
 
   const {
     data: post,
@@ -83,6 +109,31 @@ const PostDetailView = () => {
 
   const [getUser, { data: author, isLoading: isLoadingAuthor }] =
     useLazyGetUserByIdQuery();
+
+  const { data: currentUser } = useGetCurrentUserQuery(undefined);
+
+  const {
+    data: commentList,
+    isLoading: isLoadingComments,
+    isFetching: isFetchingComments,
+    refetch: refetchComments,
+  } = useGetCommentsByPostQuery(postId, { skip: !postId });
+
+  const comments = commentList ?? [];
+
+  const [createComment, { isLoading: isCreatingComment }] =
+    useCreateCommentMutation();
+  const [updateComment, { isLoading: isUpdatingComment }] =
+    useUpdateCommentMutation();
+  const [deleteComment, { isLoading: isDeletingComment }] =
+    useDeleteCommentMutation();
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const storedUserId = localStorage.getItem("userId") ?? "";
+      setLocalUserId(storedUserId);
+    }
+  }, []);
 
   useEffect(() => {
     if (post) {
@@ -112,6 +163,150 @@ const PostDetailView = () => {
 
     updatePost(updatedPost);
   }, [post, author, updatePost]);
+
+  const currentUserId = currentUser?.id ?? localUserId;
+  const currentUserRole = currentUser?.rol ?? "student";
+  const isDeleteModalOpen = Boolean(commentPendingDelete);
+  const isDeletingSelectedComment =
+    Boolean(commentPendingDelete?.id) &&
+    commentPendingDelete?.id === commentInActionId &&
+    isDeletingComment;
+
+  const canManageComment = (comment: PostComment) =>
+    currentUserRole === "admin" || comment.authorId === currentUserId;
+
+  const hasCommentBeenEdited = (comment: PostComment) => {
+    if (!comment.updatedAt) {
+      return false;
+    }
+    const created = coerceDateTime(comment.createdAt);
+    const updated = coerceDateTime(comment.updatedAt);
+    if (!created || !updated) {
+      return false;
+    }
+    return created.toMillis() !== updated.toMillis();
+  };
+
+  const resetCommentError = () => {
+    if (commentError) {
+      setCommentError(null);
+    }
+  };
+
+  const handleStartEdit = (comment: PostComment) => {
+    if (!comment.id) {
+      return;
+    }
+    resetCommentError();
+    setEditingCommentId(comment.id);
+    setEditingContent(comment.content);
+  };
+
+  const handleCancelEdit = () => {
+    resetCommentError();
+    setEditingCommentId(null);
+    setEditingContent("");
+  };
+
+  const handleRequestDeleteComment = (comment: PostComment) => {
+    resetCommentError();
+    setCommentPendingDelete(comment);
+  };
+
+  const handleCloseDeleteModal = () => {
+    if (isDeletingSelectedComment) {
+      return;
+    }
+    setCommentPendingDelete(null);
+    setCommentInActionId(null);
+    setCommentError(null);
+  };
+
+  const handleCreateComment = async () => {
+    if (!postId) return;
+
+    if (!currentUserId) {
+      setCommentError("Necesitas iniciar sesión para comentar.");
+      return;
+    }
+
+    const trimmed = newComment.trim();
+    if (!trimmed) {
+      setCommentError("Ingresa un comentario antes de publicar.");
+      return;
+    }
+
+    try {
+      resetCommentError();
+      await createComment({
+        postId,
+        authorId: currentUserId,
+        authorName: currentUser?.name ?? "Usuario",
+        authorImage: currentUser?.imageUrl ?? "",
+        content: trimmed,
+      }).unwrap();
+      setNewComment("");
+      await refetchComments();
+    } catch (error) {
+      console.error("Error al crear comentario:", error);
+      setCommentError("No pudimos publicar tu comentario. Intenta nuevamente.");
+    }
+  };
+
+  const handleUpdateComment = async () => {
+    if (!postId || !editingCommentId) {
+      return;
+    }
+
+    const trimmed = editingContent.trim();
+    if (!trimmed) {
+      setCommentError("El comentario no puede estar vacío.");
+      return;
+    }
+
+    try {
+      resetCommentError();
+      await updateComment({
+        id: editingCommentId,
+        content: trimmed,
+        postId,
+      }).unwrap();
+      setEditingCommentId(null);
+      setEditingContent("");
+      await refetchComments();
+    } catch (error) {
+      console.error("Error al actualizar comentario:", error);
+      setCommentError(
+        "Hubo un problema al actualizar el comentario. Intenta nuevamente."
+      );
+    }
+  };
+
+  const handleDeleteComment = async () => {
+    if (!commentPendingDelete?.id || !postId) {
+      return;
+    }
+
+    try {
+      resetCommentError();
+      setCommentInActionId(commentPendingDelete.id ?? null);
+      await deleteComment({
+        id: commentPendingDelete.id,
+        postId,
+      }).unwrap();
+      if (editingCommentId === commentPendingDelete.id) {
+        setEditingCommentId(null);
+        setEditingContent("");
+      }
+      await refetchComments();
+      setCommentPendingDelete(null);
+    } catch (error) {
+      console.error("Error al eliminar comentario:", error);
+      setCommentError("No pudimos eliminar el comentario. Vuelve a intentarlo.");
+    } finally {
+      setCommentInActionId(null);
+    }
+  };
 
   if (!postId) {
     return (
@@ -264,6 +459,166 @@ const PostDetailView = () => {
               </div>
             </div>
           </div>
+          <div className="card mt-4">
+            <div className="card-content">
+              <div className="is-flex is-justify-content-space-between is-align-items-center mb-4">
+                <p className="title is-5 mb-0">
+                  Comentarios ({comments.length})
+                </p>
+                {isFetchingComments && (
+                  <span className="tag is-info is-light is-size-7">
+                    Actualizando…
+                  </span>
+                )}
+              </div>
+              {isLoadingComments ? (
+                <p className="has-text-grey">Cargando comentarios…</p>
+              ) : comments.length === 0 ? (
+                <p className="has-text-grey">
+                  Aún no hay comentarios. Sé la primera persona en participar.
+                </p>
+              ) : (
+                <div className="is-flex is-flex-direction-column is-gap-3">
+                  {comments.map((comment) => (
+                    <article
+                      key={comment.id}
+                      className="p-3"
+                      style={{
+                        borderRadius: "14px",
+                        border: "1px solid #e8e8e8",
+                      }}
+                    >
+                      <div className="is-flex is-justify-content-space-between is-align-items-start">
+                        <div>
+                          <p className="has-text-weight-semibold mb-0">
+                            {comment.authorName || "Usuario"}
+                          </p>
+                          <p className="is-size-7 has-text-grey">
+                            {formatCommentDate(comment.createdAt) ||
+                              "Fecha no disponible"}
+                            {hasCommentBeenEdited(comment) ? " · Editado" : ""}
+                          </p>
+                        </div>
+                        {canManageComment(comment) && (
+                          <div className="buttons are-small mb-0">
+                            {editingCommentId === comment.id ? (
+                              <>
+                                <button
+                                  type="button"
+                                  className="button is-success is-light"
+                                  onClick={handleUpdateComment}
+                                  disabled={
+                                    isUpdatingComment ||
+                                    !editingContent.trim()
+                                  }
+                                >
+                                  {isUpdatingComment ? "Guardando…" : "Guardar"}
+                                </button>
+                                <button
+                                  type="button"
+                                  className="button is-light"
+                                  onClick={handleCancelEdit}
+                                >
+                                  Cancelar
+                                </button>
+                              </>
+                            ) : (
+                              <>
+                                <button
+                                  type="button"
+                                  className="button is-link is-light"
+                                  onClick={() => handleStartEdit(comment)}
+                                >
+                                  Editar
+                                </button>
+                                <button
+                                  type="button"
+                                  className="button is-danger is-light"
+                                  onClick={() =>
+                                    handleRequestDeleteComment(comment)
+                                  }
+                                  disabled={
+                                    isDeletingComment &&
+                                    commentInActionId === comment.id
+                                  }
+                                >
+                                  {isDeletingComment &&
+                                  commentInActionId === comment.id
+                                    ? "Eliminando…"
+                                    : "Eliminar"}
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      <div className="mt-3">
+                        {editingCommentId === comment.id ? (
+                          <textarea
+                            className="textarea"
+                            value={editingContent}
+                            onChange={(event) => {
+                              if (commentError) {
+                                setCommentError(null);
+                              }
+                              setEditingContent(event.target.value);
+                            }}
+                            rows={3}
+                          />
+                        ) : (
+                          <p
+                            className="is-size-6"
+                            style={{ whiteSpace: "pre-wrap" }}
+                          >
+                            {comment.content}
+                          </p>
+                        )}
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              )}
+              <hr className="my-4" />
+              <div>
+                <p className="title is-6">Escribe un comentario</p>
+                {commentError && (
+                  <div className="notification is-danger is-light py-2 px-3">
+                    {commentError}
+                  </div>
+                )}
+                <textarea
+                  className="textarea"
+                  placeholder="Comparte tus ideas o preguntas..."
+                  value={newComment}
+                  onChange={(event) => {
+                    if (commentError) {
+                      setCommentError(null);
+                    }
+                    setNewComment(event.target.value);
+                  }}
+                  rows={3}
+                  disabled={!currentUserId || isCreatingComment}
+                />
+                {!currentUserId && (
+                  <p className="help is-warning mt-1">
+                    Inicia sesión para dejar un comentario.
+                  </p>
+                )}
+                <button
+                  className="button is-primary mt-3"
+                  type="button"
+                  onClick={handleCreateComment}
+                  disabled={
+                    !currentUserId ||
+                    isCreatingComment ||
+                    !newComment.trim()
+                  }
+                >
+                  {isCreatingComment ? "Publicando…" : "Publicar comentario"}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div className="column is-4">
@@ -298,6 +653,28 @@ const PostDetailView = () => {
           </div>
         </div>
       </div>
+
+      <GeneralModal
+        isOpen={isDeleteModalOpen}
+        onClose={handleCloseDeleteModal}
+        title="Eliminar comentario"
+        description="¿Estás seguro de que deseas eliminar este comentario? Esta acción no se puede deshacer."
+        confirmLabel={isDeletingSelectedComment ? "Eliminando…" : "Eliminar"}
+        cancelLabel="Cancelar"
+        confirmDisabled={isDeletingSelectedComment}
+        onConfirm={handleDeleteComment}
+      >
+        <p className="mb-2">
+          Autor:{" "}
+          <strong>{commentPendingDelete?.authorName || "Usuario"}</strong>
+        </p>
+        <div
+          className="p-3 has-background-light"
+          style={{ borderRadius: "12px", whiteSpace: "pre-wrap" }}
+        >
+          {commentPendingDelete?.content}
+        </div>
+      </GeneralModal>
     </div>
   );
 };
